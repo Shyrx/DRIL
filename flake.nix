@@ -3,6 +3,7 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-21.11";
+    yaka-gistre.url = "git+file:///home/gawain/github/yaka-gistre";
     futils.url = "github:numtide/flake-utils";
     pre-commit-hooks = {
       url = "github:cachix/pre-commit-hooks.nix";
@@ -16,6 +17,7 @@
 
   outputs =
     { self
+    , yaka-gistre
     , nixpkgs
     , futils
     , pre-commit-hooks
@@ -43,16 +45,10 @@
       anySystemOutputs = { };
 
       multiSystemOutputs = eachSystem systems (system: rec {
-        inherit (pkgset system) pkgs;
-        # Executed by `nix run .#<name>`
-        # apps = ;
-        # pkgs = ;
-        # devshell = ;
-        # Executed by `nix flake check`
-        # checks."<system>"."<attr>" = derivation;
-        # Executed by `nix build .#<name>`
-        # packages."<system>"."<attr>" = derivation;
-        # Executed by `nix build .`
+
+        yakalib = yaka-gistre.${system};
+        apps = yaka-gistre.apps.${system};
+        pkgs = yaka-gistre.pkgs.${system};
         checks = {
           pre-commit = pre-commit-hooks.lib.${system}.run {
             src = ./.;
@@ -63,8 +59,9 @@
         devShell = pkgs.mkShell {
           inherit (self.checks.${system}.pre-commit) shellHook;
           buildInputs = with pkgs; [
-            hello
+            qemu
             sl
+            gcc
           ];
         };
       });
