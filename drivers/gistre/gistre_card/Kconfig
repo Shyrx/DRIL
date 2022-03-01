@@ -1,0 +1,5 @@
+config NAME
+       bool "Module for MFRC522 card"
+       depends on MFRC522_EMU
+       help
+        "Description of what our module do"
