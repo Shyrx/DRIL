@@ -13,7 +13,7 @@ enum COMMAND_TYPE {
 };
 
 struct command {
-    COMMAND_TYPE command_type;
+    enum COMMAND_TYPE command_type;
     char **args;
     int nb_arg;
 };

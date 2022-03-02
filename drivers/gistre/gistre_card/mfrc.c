@@ -62,7 +62,7 @@ ssize_t mfrc_read(struct file *file, char __user *buf,
 
     // reset data
     memset(dev->data, 0, MAX_SIZE_BUFFER + 1);
-    dev-contains_data = false;
+    dev->contains_data = false;
 
     return MAX_SIZE_BUFFER;
 }
