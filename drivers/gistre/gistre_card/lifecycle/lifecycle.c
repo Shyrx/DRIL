@@ -9,7 +9,7 @@
  * Metadata
  */
 
-MODULE_AUTHOR("Geoffrey Le Gourriérec");
+MODULE_AUTHOR("antoine.sole, thomas.crambert");
 MODULE_LICENSE("GPL v2");
 
 /*
@@ -49,11 +49,13 @@ static void lifecycle_exit(void) {
 	dev = MKDEV(major, 0);
 	unregister_chrdev_region(dev, 1);
 	pr_info("Released major %d\n", major);
+
+    pr_info("IT WAS NICE TO LIVE\n");
 }
 
 __init
 static int lifecycle_init(void) {
-
+    pr_info("IT IS GOOD TO BE ALIVE\n");
 	dev_t dev;
 	int ret;
 	const char devname[] = "lifecycle0";
