@@ -129,7 +129,7 @@ static int mfrc_init(void) {
 	}
 	else {
 		major = MAJOR(dev);
-		pr_debug("Got major %d\n", major);
+		pr_info("Got major %d\n", major);
 	}
 
 	/* Allocate our device structure */
