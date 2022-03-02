@@ -70,12 +70,15 @@ ssize_t mfrc_write(struct file *file, const char __user *user_buf,
     // TODO: communicate with internal buffer of card
 	struct mfrc_dev *dev;
     dev = file->private_data;
+
     char buff[MAX_SIZE_BUFFER + 1];
     memset(buff, 0, MAX_SIZE_BUFFER + 1);
+
     if (copy_from_user(buff, user_buf, MAX_SIZE_BUFFER)) {
         pr_err("Failed to copy user");
         return -EFAULT;
     }
+
     struct command *command = parse_command(buff);
     if (command == NULL) {
         return -EFAULT;

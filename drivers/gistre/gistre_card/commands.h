@@ -9,6 +9,7 @@ struct mfrc_dev;
 enum COMMAND_TYPE {
     COMMAND_READ = 0,
     COMMAND_WRITE,
+    COMMAND_NOT_FOUND,
 };
 
 struct command {

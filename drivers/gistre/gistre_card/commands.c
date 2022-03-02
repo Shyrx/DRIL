@@ -2,10 +2,21 @@
 
 #include <linux/slab.h>
 #include <linux/string.h>
+#include <string.h>
+
+static char* my_strcpy(const char *buffer) {
+    char *new = kmalloc(sizeof(char) * strlen(buffer), GFP_KERNEL);
+    strcpy(new, buffer);
+    return new;
+}
 
 // TODO
-struct command *command_init(void) {
-    return NULL;
+struct command *command_init(COMMAND_TYPE type, int nb_args) {
+    struct command *command = kmalloc(sizeof(struct command), GFP_KERNEL);
+    command->args = kmalloc(sizeof(char *) * nb_args);
+    command->nb_arg = nb_args;
+    command->command_type = type;
+    return command;
 }
 
 void command_free(struct command *command) {
@@ -18,39 +29,53 @@ void command_free(struct command *command) {
     kfree(command);
 }
 
-// REFACTO WHEN WORKING
-struct command *parse_command(const char *buf){
-    // check if command is valid
-    char *useless;
-    size_t len_write = strlen("mem_write");
-    struct command *command = NULL;
-    pr_info("Parsing command: %s\n", buf);
-    if (!strncmp(buf, "mem_write", len_write)) {
-        command = kmalloc(sizeof(struct command), GFP_KERNEL);
-        command->args = kmalloc(sizeof(char *) * 2, GFP_KERNEL); // TODO
-        command->nb_arg = 2; // TODO
 
-        // parse until next ':' and check if it is <= 25
-        if (!sscanf(buf, "%ms:%ms:%ms", &useless, command->args,
-                    command->args + 1)) {
-            command_free(command);
-        }
-        pr_info("%s\n", useless);
-        pr_info("%s\n", *(command->args));
-        pr_info("%s\n", *(command->args + 1));
-        int write_size = strlen(*(command->args + 1));
+static const char* map_command[] = {
+[COMMAND_WRITE] = "mem_write",
+[COMMAND_READ] = "mem_read",
+};
 
-        if (write_size > 25) {
-            *(*(command->args + 1) + 25) = '\0';
-        }
-        pr_info("%d\n", write_size);
-        command->command_type = COMMAND_WRITE;
+struct command *parse_write(const char* buffer) {
+    struct command *command = command_init(COMMAND_WRITE, 2);
+    buffer += strlen(map_command[COMMAND_WRITE]) + 1;
+    char *tok = NULL;
+    char *sep = ":";
+    while ((tok = strsep(buffer, sep)) != NULL) {
+        *(command->args + command->nb_arg++) = my_strcpy(tok);
+        pr_info("arg %d: %s\n", command->nb_arg - 1, tok);
+        kfree(tok);
     }
-    else {
-        // TODO: get only first verb
-        pr_warn("Unknown command: %s", buf);
-    }
+
     return command;
+}
+
+struct command *parse_read(const char*buffer) {
+    struct command *command = command_init(COMMAND_READ, 0);
+    return command;
+}
+
+typedef struct command* (*map_parse_command)(const char *buffer);
+
+static const map_parse_command jump_parse[] = {
+[COMMAND_WRITE] = parse_write,
+[COMMAND_READ] = parse_read,
+};
+
+// REFACTO WHEN WORKING
+struct command *parse_command(const char *buffer){
+    pr_info("Parsing command: %s\n", buffer);
+    enum COMMAND_TYPE command_type = 0;
+    while (command_type != COMMAND_NOT_FOUND
+           && strncmp(buffer, map_command[command_type], strlen(map_command[command_type])) != 0) {
+        command_type++;
+    }
+
+    if (command_type == COMMAND_NOT_FOUND) {
+        pr_err("command not found: '%s'\n", buffer);
+        return NULL;
+    }
+
+    return jump_parse[command_type](buffer);
 }
 
 ssize_t exec_command(struct command *command, struct mfrc_dev *mfrc_dev) {
