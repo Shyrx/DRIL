@@ -81,7 +81,7 @@ ssize_t mfrc_write(struct file *file, const char __user *user_buf,
         return -EFAULT;
     }
 
-	return exec_command(command, dev);
+	return len;
 }
 
 /*

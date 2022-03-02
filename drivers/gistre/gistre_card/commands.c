@@ -24,7 +24,7 @@ struct command *parse_command(const char *buf){
     char *useless;
     size_t len_write = strlen("mem_write");
     struct command *command = NULL;
-    pr_info("Parsing command: %s", buf);
+    pr_info("Parsing command: %s\n", buf);
     if (!strncmp(buf, "mem_write", len_write)) {
         command = kmalloc(sizeof(struct command), GFP_KERNEL);
         command->args = kmalloc(sizeof(char *) * 2, GFP_KERNEL); // TODO
