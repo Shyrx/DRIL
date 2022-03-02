@@ -9,8 +9,11 @@ struct command *command_init() {
 }
 
 void command_free(struct command *command) {
-    for(int i = 0; i < command->nb_arg; i++)
+    int i = 0;
+    while (i < command->nb_arg) {
         kfree(*(command->args + i));
+        i++;
+    }
     kfree(command->args);
     kfree(command);
 }
@@ -27,8 +30,8 @@ struct command *parse_command(const char *buf){
         command->nb_arg = 2; // TODO
 
         // parse until next ':' and check if it is <= 25
-        if (!sscanf(buf, "%ms:%ms:%ms", useless, *command->args,
-                    *(command->args + 1))) {
+        if (!sscanf(buf, "%ms:%ms:%ms", useless, command->args,
+                    command->args + 1)) {
             command_free(command);
         }
         int write_size = strlen(*(command->args + 1));
