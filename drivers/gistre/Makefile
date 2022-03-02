@@ -7,4 +7,4 @@ obj-$(CONFIG_MFRC522_EMU)        += \
 
 # Add the directory where our builtin module is
 obj-y += \
-	gistre_card
+	gistre_card/
