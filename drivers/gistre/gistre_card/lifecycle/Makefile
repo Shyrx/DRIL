@@ -1,1 +1,2 @@
-obj-y += lifecycle.o
+obj-y += \
+	lifecycle.o
