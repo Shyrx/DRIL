@@ -8,8 +8,6 @@
 #include <linux/slab.h>
 #include <linux/uaccess.h>
 
-#include "commands.h"
-
 MODULE_AUTHOR("antoine.sole, thomas.crambert");
 MODULE_LICENSE("GPL v2");
 

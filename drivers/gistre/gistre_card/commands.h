@@ -18,7 +18,7 @@ struct command {
     int nb_arg;
 };
 
-struct command *parse_command(char *buf);
+struct command *parse_command(const char *buf);
 ssize_t exec_command(struct command *command, struct mfrc_dev *mfrc_dev);
 
 #endif

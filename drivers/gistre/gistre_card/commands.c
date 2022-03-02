@@ -16,7 +16,7 @@ void command_free(struct command *command) {
 }
 
 // REFACTO WHEN WORKING
-struct command *parse_command(char *buf){
+struct command *parse_command(const char *buf){
     // check if command is valid
     char *useless;
     size_t len_write = strlen("mem_write");
