@@ -7,9 +7,15 @@
 
 struct mfrc_dev;
 
+enum COMMAND_TYPE {
+    COMMAND_READ = 0,
+    COMMAND_WRITE,
+};
+
 struct command {
-    char *name;
+    COMMAND_TYPE command_type;
     char **args;
+    int nb_arg;
 };
 
 struct command *parse_command(char *buf);
