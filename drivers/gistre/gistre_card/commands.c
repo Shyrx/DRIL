@@ -4,7 +4,7 @@
 #include <linux/string.h>
 
 // TODO
-struct command *command_init() {
+struct command *command_init(void) {
     return NULL;
 }
 
@@ -30,7 +30,7 @@ struct command *parse_command(const char *buf){
         command->nb_arg = 2; // TODO
 
         // parse until next ':' and check if it is <= 25
-        if (!sscanf(buf, "%ms:%ms:%ms", useless, command->args,
+        if (!sscanf(buf, "%ms:%ms:%ms", &useless, command->args,
                     command->args + 1)) {
             command_free(command);
         }
