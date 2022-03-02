@@ -13,6 +13,10 @@
 MODULE_AUTHOR("antoine.sole, thomas.crambert");
 MODULE_LICENSE("GPL v2");
 
+struct command *parse_command(char *buf);
+ssize_t exec_command(struct command *command, struct mfrc_dev *mfrc_dev);
+
+
 struct mfrc_dev {
 	struct cdev cdev;
     bool contains_data;
