@@ -21,7 +21,55 @@ struct my_dev {
 
 /* Major will always be dynamically allocated */
 static int major;
-static struct my_dev *my_dev;
+static struct mfrc_dev *mfrc_dev;
+
+/* open read write */
+
+int mfrc_open(struct inode *inode, struct file *file) {
+
+	unsigned int i_major = imajor(inode);
+	unsigned int i_minor = iminor(inode);
+
+	pr_info("%s()\n", __func__);
+
+	if (i_major != major) {
+		pr_err("Invalid major %d, expected %d\n", i_major, major);
+		return -EINVAL;
+	}
+
+	/* Make file descriptor "remember" its mirror device object,
+	 * for later use in open() and write(). */
+	file->private_data = pp_dev;
+
+	return 0;
+}
+
+int mfrc_release(struct inode *inode /* unused */,
+        struct file *file /* unused */) {
+
+	pr_debug("%s()\n", __func__);
+
+	/* Nothing in particular to do */
+	return 0;
+}
+
+ssize_t mfrc_read(struct file *file, char __user *buf,
+        size_t len, loff_t *off /* unused */) {
+
+	struct mfrc_dev *dev;
+    dev = file->private_data;
+    // TODO
+	return 0;
+}
+
+ssize_t mfrc_write(struct file *file, const char __user *buf,
+        size_t len, loff_t *off /* unused */) {
+
+	struct pingpong_dev *dev;
+    dev = file->private_data;
+    // TODO
+	return len;
+}
 
 /*
  *  Init & Exit
@@ -29,6 +77,10 @@ static struct my_dev *my_dev;
 
 static struct file_operations mfrc_fops = {
 	.owner   = THIS_MODULE,
+    .read    = mfrc_read,
+    .write   = mfrc_write,
+    .open    = mfrc_open,
+    .release = mfrc_release
 	/* Only use the kernel's defaults */
 };
 
@@ -38,12 +90,12 @@ static void mfrc_exit(void) {
 	dev_t dev;
 
 	/* Unregister char device */
-	cdev_del(&my_dev->cdev);
+	cdev_del(&mfrc_dev->cdev);
 	pr_debug("Unregistered char device\n");
 
-	/* Free my_dev structure */
-	kfree(my_dev);
-	pr_debug("Freed struct my_dev\n");
+	/* Free mfrc_dev structure */
+	kfree(mfrc_dev);
+	pr_debug("Freed struct mfrc_dev\n");
 
 	/* Release major */
 	dev = MKDEV(major, 0);
@@ -73,20 +125,20 @@ static int mfrc_init(void) {
 	}
 
 	/* Allocate our device structure */
-	my_dev = kmalloc(sizeof(*my_dev), GFP_KERNEL);
-	if (! my_dev) {
-		pr_err("Failed to allocate struct my_dev\n");
+	mfrc_dev = kmalloc(sizeof(*mfrc_dev), GFP_KERNEL);
+	if (! mfrc_dev) {
+		pr_err("Failed to allocate struct mfrc_dev\n");
 		return -ENOMEM;
 	}
 	else {
-		pr_debug("Allocated struct my_dev\n");
+		pr_debug("Allocated struct mfrc_dev\n");
 	}
 
 	/* Register char device */
-	my_dev->cdev.owner = THIS_MODULE;
-	cdev_init(&my_dev->cdev, &mfrc_fops);
+	mfrc_dev->cdev.owner = THIS_MODULE;
+	cdev_init(&mfrc_dev->cdev, &mfrc_fops);
 
-	ret = cdev_add(&my_dev->cdev, dev, 1);
+	ret = cdev_add(&mfrc_dev->cdev, dev, 1);
 	if (ret < 0) {
 		pr_err("Failed to register char device\n");
 		return -ENOMEM;
