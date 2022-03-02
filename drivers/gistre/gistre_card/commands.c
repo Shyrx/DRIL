@@ -12,7 +12,7 @@ static char* my_strcpy(const char *buffer) {
 // TODO
 struct command *command_init(enum COMMAND_TYPE type, int nb_args) {
     struct command *command = kmalloc(sizeof(struct command), GFP_KERNEL);
-    command->args = kmalloc(sizeof(char *) * nb_args);
+    command->args = kmalloc(sizeof(char *) * nb_args, GFP_KERNEL);
     command->nb_arg = nb_args;
     command->command_type = type;
     return command;
@@ -36,15 +36,17 @@ static const char* map_command[] = {
 
 struct command *parse_write(const char* buffer) {
     struct command *command = command_init(COMMAND_WRITE, 2);
-    buffer += strlen(map_command[COMMAND_WRITE]) + 1;
+    char *new_buff = my_strcpy(buffer);
+    new_buff += strlen(map_command[COMMAND_WRITE]) + 1;
     char *tok = NULL;
     char *sep = ":";
-    while ((tok = strsep(&buffer, sep)) != NULL) {
+    while ((tok = strsep(&new_buff, sep)) != NULL) {
         *(command->args + command->nb_arg++) = my_strcpy(tok);
         pr_info("arg %d: %s\n", command->nb_arg - 1, tok);
         kfree(tok);
     }
 
+    kfree(new_buff);
     return command;
 }
 
