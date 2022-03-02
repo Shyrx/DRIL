@@ -1,5 +1,6 @@
-config NAME
-       bool "Module for MFRC522 card"
+config MFRC_522_DRIVER
+       bool "enable driver for MFRC_522 Card"
        depends on MFRC522_EMU
        help
+       # TODO
         "Description of what our module do"

@@ -33,32 +33,33 @@ static struct file_operations lifecycle_fops = {
 };
 
 __exit
-static void lifecycle_exit(void) {
+static void mfrc_exit(void) {
 
 	dev_t dev;
 
 	/* Unregister char device */
 	cdev_del(&my_dev->cdev);
-	pr_info("Unregistered char device\n");
+	pr_debug("Unregistered char device\n");
 
 	/* Free my_dev structure */
 	kfree(my_dev);
-	pr_info("Freed struct my_dev\n");
+	pr_debug("Freed struct my_dev\n");
 
 	/* Release major */
 	dev = MKDEV(major, 0);
 	unregister_chrdev_region(dev, 1);
-	pr_info("Released major %d\n", major);
+	pr_debug("Released major %d\n", major);
 
-    pr_info("IT WAS NICE TO LIVE\n");
+    pr_info("Stopping driver support for MFRC_522 card\n");
 }
 
 __init
-static int lifecycle_init(void) {
-    pr_info("IT IS GOOD TO BE ALIVE\n");
+static int mfrc_init(void) {
+    pr_info("Hello, GISTRE card !\n");
+    pr_debug("Driver, activated\n");
 	dev_t dev;
 	int ret;
-	const char devname[] = "lifecycle0";
+	const char devname[] = "mfrc0";
 
 	/* Allocate major */
 	ret = alloc_chrdev_region(&dev, 0, 1, devname);
@@ -68,7 +69,7 @@ static int lifecycle_init(void) {
 	}
 	else {
 		major = MAJOR(dev);
-		pr_info("Got major %d\n", major);
+		pr_debug("Got major %d\n", major);
 	}
 
 	/* Allocate our device structure */
@@ -78,12 +79,12 @@ static int lifecycle_init(void) {
 		return -ENOMEM;
 	}
 	else {
-		pr_info("Allocated struct my_dev\n");
+		pr_debug("Allocated struct my_dev\n");
 	}
 
 	/* Register char device */
 	my_dev->cdev.owner = THIS_MODULE;
-	cdev_init(&my_dev->cdev, &lifecycle_fops);
+	cdev_init(&my_dev->cdev, &mfrc_fops);
 
 	ret = cdev_add(&my_dev->cdev, dev, 1);
 	if (ret < 0) {
@@ -91,11 +92,11 @@ static int lifecycle_init(void) {
 		return -ENOMEM;
 	}
 	else {
-		pr_info("Registered char device\n");
+		pr_debug("Registered char device\n");
 	}
 
 	return 0;
 }
 
-module_init(lifecycle_init);
-module_exit(lifecycle_exit);
+module_init(mfrc_init);
+module_exit(mfrc_exit);
