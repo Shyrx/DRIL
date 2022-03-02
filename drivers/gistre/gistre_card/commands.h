@@ -3,7 +3,6 @@
 
 #include <linux/kernel.h>
 #include <linux/module.h>
-#include "mfrc.h"
 
 struct mfrc_dev;
 
