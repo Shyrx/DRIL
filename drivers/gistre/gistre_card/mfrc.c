@@ -6,6 +6,7 @@
 #include <linux/cdev.h>
 #include <linux/errno.h>
 #include <linux/slab.h>
+#include <linux/uaccess.h>
 
 MODULE_AUTHOR("antoine.sole, thomas.crambert");
 MODULE_LICENSE("GPL v2");
@@ -25,7 +26,7 @@ int mfrc_open(struct inode *inode, struct file *file) {
 		return -EINVAL;
 	}
     pr_debug("mfrc_open: major '%u', minor '%u'\n", i_major, i_minor);
-    file->private_data = pp_dev;
+    file->private_data = mfrc_dev;
 
 	return 0;
 }
@@ -54,18 +55,18 @@ ssize_t mfrc_write(struct file *file, const char __user *buf,
         size_t len, loff_t *off /* unused */) {
     // TODO: communicate with internal buffer of card
 	struct pingpong_dev *dev;
-    dev = file->private_data;
-    char buffer[MAX_SIZE_BUFFER + 1] ;
-    memset(buffer, 0, MAX_SIZE_BUFFER + 1);
-    memcpy(buffer, buf, MAX_SIZE_BUFFER);
-    if (copy_to_user(buf, buffer, len)) {
-        pr_err("Failed to copy data to user\n");
-        return -EFAULT;
-    }
-    else {
+    /* dev = file->private_data; */
+    /* char buffer[MAX_SIZE_BUFFER + 1] ; */
+    /* memset(buffer, 0, MAX_SIZE_BUFFER + 1); */
+    /* memcpy(buffer, buf, MAX_SIZE_BUFFER); */
+    /* if (copy_to_user(buf, buffer, len)) { */
+    /*     pr_err("Failed to copy data to user\n"); */
+    /*     return -EFAULT; */
+    /* } */
+    /* else { */
         
-    }
-    // TODO
+    /* } */
+    /* // TODO */
 	return len;
 }
 
