@@ -35,17 +35,16 @@ static const char* map_command[] = {
 };
 
 struct command *parse_write(const char* buffer) {
-    struct command *command = command_init(COMMAND_WRITE, 2);
+    struct command *command = command_init(COMMAND_WRITE, 3);
     char *new_buff = my_strcpy(buffer);
-    new_buff += strlen(map_command[COMMAND_WRITE]) + 1;
     char *tok = NULL;
     char *sep = ":";
+    new_buff += strlen(map_command[COMMAND_WRITE]) + 1;
+    int i = 0;
     while ((tok = strsep(&new_buff, sep)) != NULL) {
-        *(command->args + command->nb_arg++) = my_strcpy(tok);
-        pr_info("arg %d: %s\n", command->nb_arg - 1, tok);
-        kfree(tok);
+      *(command->args + i++) = my_strcpy(tok);
+      pr_info("arg %d: %s\n", i, tok);
     }
-
     kfree(new_buff);
     return command;
 }
