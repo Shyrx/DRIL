@@ -5,6 +5,8 @@
 #include <linux/module.h>
 #include <linux/slab.h>
 
+#define MAX_SIZE_BUFFER 25
+
 /*
  * Metadata
  */
@@ -15,8 +17,9 @@ MODULE_LICENSE("GPL v2");
 /*
  * Local definitions
  */
-struct my_dev {
+struct mfrc_dev {
 	struct cdev cdev;
+    char buffer[MAX_SIZE_BUFFER + 1]; // + 1 to be null terminated
 };
 
 /* Major will always be dynamically allocated */
@@ -55,18 +58,30 @@ int mfrc_release(struct inode *inode /* unused */,
 
 ssize_t mfrc_read(struct file *file, char __user *buf,
         size_t len, loff_t *off /* unused */) {
-
+    // TODO: communicate with internal buffer of card
 	struct mfrc_dev *dev;
     dev = file->private_data;
+    char buffer[MAX_SIZE_BUFFER + 1] ;
     // TODO
 	return 0;
+
 }
 
 ssize_t mfrc_write(struct file *file, const char __user *buf,
         size_t len, loff_t *off /* unused */) {
-
+    // TODO: communicate with internal buffer of card
 	struct pingpong_dev *dev;
     dev = file->private_data;
+    char buffer[MAX_SIZE_BUFFER + 1] ;
+    memset(buffer, 0, MAX_SIZE_BUFFER + 1);
+    memcpy(buffer, buf, MAX_SIZE_BUFFER);
+    if (copy_to_user(buf, buffer, len)) {
+        pr_err("Failed to copy data to user\n");
+        return -EFAULT;
+    }
+    else {
+        
+    }
     // TODO
 	return len;
 }

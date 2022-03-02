@@ -27,3 +27,8 @@ qemu-system-arm   -M versatilepb   -m 128   -kernel arch/arm/boot/zImage   -dtb 
 
 
 https://elinux.org/Debugging_by_printing
+
+# Debug
+
+CONFIG_DEBUG_INFO=Y
+CONFIG_FRAME_POINTER=Y
