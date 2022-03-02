@@ -15,7 +15,8 @@ MODULE_LICENSE("GPL v2");
 
 struct mfrc_dev {
 	struct cdev cdev;
-    char buffer[MAX_SIZE_BUFFER + 1]; // + 1 to be null terminated
+    bool contains_data;
+    char data[MAX_SIZE_BUFFER + 1]; // + 1 to be null terminated
 };
 
 int mfrc_open(struct inode *inode, struct file *file);

@@ -8,6 +8,8 @@
 #include <linux/slab.h>
 #include <linux/uaccess.h>
 
+#include "commands.h"
+
 MODULE_AUTHOR("antoine.sole, thomas.crambert");
 MODULE_LICENSE("GPL v2");
 
@@ -45,29 +47,38 @@ ssize_t mfrc_read(struct file *file, char __user *buf,
     // TODO: communicate with internal buffer of card
 	struct mfrc_dev *dev;
     dev = file->private_data;
-    char buffer[MAX_SIZE_BUFFER + 1] ;
-    // TODO
-	return 0;
 
+    // check if data exists
+    if (!dev->contains_data) {
+        pr_warn("No data in internal buffer\n");
+        return 0;
+    }
+
+    // flush internal buffer
+    if (copy_to_user(buf, dev->data, MAX_SIZE_BUFFER + 1)) {
+        pr_err("Failed to copy data to user\n");
+        return -EFAULT;
+    }
+
+    // reset data
+    memset(dev->data, 0, MAX_SIZE_BUFFER + 1);
+    dev-contains_data = false;
+
+    return MAX_SIZE_BUFFER;
 }
 
 ssize_t mfrc_write(struct file *file, const char __user *buf,
         size_t len, loff_t *off /* unused */) {
     // TODO: communicate with internal buffer of card
-	struct pingpong_dev *dev;
-    /* dev = file->private_data; */
-    /* char buffer[MAX_SIZE_BUFFER + 1] ; */
-    /* memset(buffer, 0, MAX_SIZE_BUFFER + 1); */
-    /* memcpy(buffer, buf, MAX_SIZE_BUFFER); */
-    /* if (copy_to_user(buf, buffer, len)) { */
-    /*     pr_err("Failed to copy data to user\n"); */
-    /*     return -EFAULT; */
-    /* } */
-    /* else { */
-        
-    /* } */
-    /* // TODO */
-	return len;
+	struct mfrc_dev *dev;
+    dev = file->private_data;
+
+    struct command *command = parse_command(buf);
+    if (command == NULL) {
+        return -EFAULT;
+    }
+
+	return exec_command(command, dev);
 }
 
 /*
