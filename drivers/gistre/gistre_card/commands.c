@@ -2,7 +2,6 @@
 
 #include <linux/slab.h>
 #include <linux/string.h>
-#include <string.h>
 
 static char* my_strcpy(const char *buffer) {
     char *new = kmalloc(sizeof(char) * strlen(buffer), GFP_KERNEL);
