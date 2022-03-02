@@ -27,7 +27,7 @@ static struct my_dev *my_dev;
  *  Init & Exit
  */
 
-static struct file_operations lifecycle_fops = {
+static struct file_operations mfrc_fops = {
 	.owner   = THIS_MODULE,
 	/* Only use the kernel's defaults */
 };
