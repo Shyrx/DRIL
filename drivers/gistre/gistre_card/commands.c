@@ -35,6 +35,7 @@ struct command *parse_command(const char *buf){
                     command->args + 1)) {
             command_free(command);
         }
+        pr_info("%s\n", useless);
         pr_info("%s\n", *(command->args));
         pr_info("%s\n", *(command->args + 1));
         int write_size = strlen(*(command->args + 1));
