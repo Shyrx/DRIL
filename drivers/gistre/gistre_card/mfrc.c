@@ -1,26 +1,14 @@
-#include <linux/cdev.h>
-#include <linux/errno.h>
-#include <linux/fs.h>
+#include "mfrc.h"
+
 #include <linux/kernel.h>
 #include <linux/module.h>
+#include <linux/fs.h>
+#include <linux/cdev.h>
+#include <linux/errno.h>
 #include <linux/slab.h>
-
-#define MAX_SIZE_BUFFER 25
-
-/*
- * Metadata
- */
 
 MODULE_AUTHOR("antoine.sole, thomas.crambert");
 MODULE_LICENSE("GPL v2");
-
-/*
- * Local definitions
- */
-struct mfrc_dev {
-	struct cdev cdev;
-    char buffer[MAX_SIZE_BUFFER + 1]; // + 1 to be null terminated
-};
 
 /* Major will always be dynamically allocated */
 static int major;
@@ -32,17 +20,12 @@ int mfrc_open(struct inode *inode, struct file *file) {
 
 	unsigned int i_major = imajor(inode);
 	unsigned int i_minor = iminor(inode);
-
-	pr_info("%s()\n", __func__);
-
 	if (i_major != major) {
 		pr_err("Invalid major %d, expected %d\n", i_major, major);
 		return -EINVAL;
 	}
-
-	/* Make file descriptor "remember" its mirror device object,
-	 * for later use in open() and write(). */
-	file->private_data = pp_dev;
+    pr_debug("mfrc_open: major '%u', minor '%u'\n", i_major, i_minor);
+    file->private_data = pp_dev;
 
 	return 0;
 }
@@ -50,7 +33,7 @@ int mfrc_open(struct inode *inode, struct file *file) {
 int mfrc_release(struct inode *inode /* unused */,
         struct file *file /* unused */) {
 
-	pr_debug("%s()\n", __func__);
+    pr_debug("mfrc_release\n");
 
 	/* Nothing in particular to do */
 	return 0;
