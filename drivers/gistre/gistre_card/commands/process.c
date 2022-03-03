@@ -2,7 +2,7 @@
 #include <linux/slab.h>
 
 #include "command.h"
-#include "../mfrc.h"
+#include "../../mfrc522.h"
 
 
 typedef ssize_t (*map_process_command)(struct command *command, struct regmap *regmap, struct mfrc_dev *mfrc_dev);

@@ -1,5 +1,7 @@
 #include "command.h"
 
+#include <linux/slab.h>
+
 /**
  * @param type: the type of the command
  * @param nb_args: the args the command takes

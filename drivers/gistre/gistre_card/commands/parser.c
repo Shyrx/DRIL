@@ -3,8 +3,6 @@
 #include <linux/slab.h>
 #include <linux/string.h>
 
-#include "../mfrc522.h"
-
 /**
  * @param buffer: source string to copy data from
  * @return an allocated string with data from buffer
