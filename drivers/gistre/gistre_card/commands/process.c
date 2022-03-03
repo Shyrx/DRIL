@@ -57,7 +57,7 @@ static ssize_t process_write(struct command *command, struct regmap *regmap, str
     }
     pr_info("Write: flush successful, starting to write\n");
     while (i < data_size) {
-        int err = regmap_write(regmap, MFRC522_FIFODATAREG, mfrc_dev->data + i);
+        int err = regmap_write(regmap, MFRC522_FIFODATAREG, *((*command->args + 1) + i);
         if (err)
         {
             pr_err("Write: Failed to write value to card\n");
@@ -66,9 +66,8 @@ static ssize_t process_write(struct command *command, struct regmap *regmap, str
         i++;
     }
     pr_info("Write: finished to write mandatory content, will fill with zeroes if necessary\n");
-    int zero = 0;
     while (i < MAX_SIZE_BUFFER) {
-        int err = regmap_write(regmap, MFRC522_FIFODATAREG, &zero);
+        int err = regmap_write(regmap, MFRC522_FIFODATAREG, 0);
         if (err)
         {
             pr_err("Write: Failed to write zeroes to card\n");
