@@ -89,7 +89,19 @@ ssize_t mfrc_write(struct file *file, const char __user *user_buf,
         return -EFAULT;
     }
     
-	return process_command(command, dev);
+	if (process_command(command, dev) < 0) {
+        // TODO precise error here
+        pr_err("Error while processing command\n");
+        return -1;
+    }
+
+    long data_size;
+    if (kstrtol(*command->args, 10, &data_size) != 0) {
+        pr_err("Couldn't parse the length of the data, was '%s'\n", *command->args);
+        return -1;
+    }
+
+    return data_size;
 }
 
 /*
