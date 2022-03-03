@@ -55,6 +55,8 @@ ssize_t mfrc_read(struct file *file, char __user *buf,
         return 0;
     }
 
+    pr_info("Read: dev data is '%s'\n", dev->data);
+
     // flush internal buffer
     if (copy_to_user(buf, dev->data, INTERNAL_BUFFER_SIZE + 1)) {
         pr_err("Failed to copy data to user\n");
@@ -69,12 +71,9 @@ ssize_t mfrc_read(struct file *file, char __user *buf,
 
 ssize_t mfrc_write(struct file *file, const char __user *user_buf,
         size_t len, loff_t *off /* unused */) {
-    // TODO: communicate with internal buffer of card
 	struct mfrc_dev *dev;
     dev = file->private_data;
     
-    // TODO: fix size, only takes 25 characters,
-    //       including command_name + size
     char buff[MAX_ACCEPTED_COMMAND_SIZE + 1];
 
     memset(buff, 0, MAX_ACCEPTED_COMMAND_SIZE + 1);
@@ -95,6 +94,7 @@ ssize_t mfrc_write(struct file *file, const char __user *user_buf,
         return -1;
     }
 
+    pr_info("Write: dev data is '%s'\n", dev->data);
     return len;
 }
 
