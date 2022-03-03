@@ -41,6 +41,7 @@ static ssize_t process_write(struct command *command, struct regmap *regmap, str
         pr_info("Write: data too large, truncating\n");
         data_size = INTERNAL_BUFFER_SIZE;
     }
+    pr_info("Write: Data size is %d\n", data_size);
     // to flush all the data
     unsigned int i = 0;
     int rc = 0;
