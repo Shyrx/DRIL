@@ -21,6 +21,7 @@ static ssize_t process_write(struct command *command, struct regmap *regmap, str
 // process_read
 static ssize_t process_read(struct command *command, struct regmap *regmap, struct mfrc_dev *mfrc_dev)
 {
+    pr_info("Trying to read from card\n");
     memset(mfrc_dev->data, 0, MAX_SIZE_BUFFER + 1);
     int i = 0;
     while (i < MAX_SIZE_BUFFER)
@@ -29,13 +30,16 @@ static ssize_t process_read(struct command *command, struct regmap *regmap, stru
         if (err)
         {
             if (i > 0) {
-                pr_err("Failed to read value from card");
+                pr_err("Failed to read value from card\n");
                 return -1;
             }
-            pr_err("No data to read");
+            pr_err("No data to read\n");
             return 0;
         }
+        if (mfrc_dev->data + i == 0)
+            break;
     }
+    pr_info("Successfully read '%d' bytes from card\n", i);
     return MAX_SIZE_BUFFER;
 }
 
