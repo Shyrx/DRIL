@@ -23,23 +23,30 @@ static ssize_t process_read(struct command *command, struct regmap *regmap, stru
 {
     pr_info("Trying to read from card\n");
     memset(mfrc_dev->data, 0, MAX_SIZE_BUFFER + 1);
+    unsigned int fifo_size = 0;
+    if (regmap_read(regmap, MFRC522_FIFOLEVELREG, &fifo_size))
+    {
+        pr_err("Failed to check fifo_size\n");
+        return -1;
+    }
+    if (fifo_size == 0)
+    {
+        pr_err("No data to read from card\n");
+        return MAX_SIZE_BUFFER;
+    }
     int i = 0;
-    while (i < MAX_SIZE_BUFFER)
+    while (i < fifo_size)
     {
         int err = regmap_read(regmap, MFRC522_FIFODATAREG, mfrc_dev->data + i);
         if (err)
         {
-            if (i > 0) {
-                pr_err("Failed to read value from card\n");
-                return -1;
-            }
-            pr_err("No data to read\n");
-            return 0;
+            pr_err("Failed to read value from card\n");
+            return -1;
         }
         if (mfrc_dev->data + i == 0)
             break;
     }
-    pr_info("Successfully read '%d' bytes from card\n", i);
+    pr_info("Successfully read '%d' bytes from card\n", fifo_size);
     return MAX_SIZE_BUFFER;
 }
 
