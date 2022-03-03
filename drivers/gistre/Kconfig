@@ -6,7 +6,6 @@ menu "MFRC522 GISTRE drivers support"
 
 config MFRC522_EMU
 	bool "GISTRE MFRC522 emulator"
-        bool "test" # TODO: implement for palier 1
 	help
       Emulates a single MFRC522 NFC card reader device.
       This device usually uses SPI, but the emulation uses the regmap
