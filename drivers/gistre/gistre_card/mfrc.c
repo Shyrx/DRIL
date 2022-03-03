@@ -55,10 +55,18 @@ ssize_t mfrc_read(struct file *file, char __user *buf,
         return 0;
     }
 
-    pr_info("Read: dev data is '%s'\n", dev->data);
+    char data[INTERNAL_BUFFER_SIZE + 1];
+    memset(data, 0, INTERNAL_BUFFER_SIZE + 1);
+    int i = 0;
+    while (i < INTERNAL_BUFFER_SIZE)
+    {
+        data[i] = dev->data[i];
+        i++;
+    }
+    pr_info("Read: dev data is '%s'\n", data);
 
     // flush internal buffer
-    if (copy_to_user(buf, dev->data, INTERNAL_BUFFER_SIZE + 1)) {
+    if (copy_to_user(buf, data, INTERNAL_BUFFER_SIZE + 1)) {
         pr_err("Failed to copy data to user\n");
         return -EFAULT;
     }
