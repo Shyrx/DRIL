@@ -3,6 +3,8 @@
 #include <linux/slab.h>
 #include <linux/string.h>
 
+#define WRITE_NB_ARG 2
+
 static const char* map_command[] = {
 [COMMAND_WRITE] = "mem_write",
 [COMMAND_READ] = "mem_read",
@@ -23,18 +25,25 @@ static char* astrcpy(const char *buffer) {
  * @return an allocated struct of kind COMMAND_WRITE
  */
 struct command *parse_write(const char* buffer) {
-    struct command *command = command_init(COMMAND_WRITE, 3);
+    struct command *command = command_init(COMMAND_WRITE, WRITE_NB_ARG);
     char *new_buff = astrcpy(buffer);
     char *tok = NULL;
     char *sep = ":";
     new_buff += strlen(map_command[COMMAND_WRITE]) + 1;
     int i = 0;
-    while ((tok = strsep(&new_buff, sep)) != NULL) {
+    while ((tok = strsep(&new_buff, sep)) != NULL && i < WRITE_NB_ARG) {
       *(command->args + i++) = astrcpy(tok);
       pr_info("arg %d: %s\n", i, tok);
     }
-
     kfree(new_buff);
+
+    // in case there are too many arguments
+    if (tok != NULL)
+    {
+        kfree(tok); // TODO: strsep free tok ?
+        command_free(command);
+        return NULL;
+    }
     return command;
 }
 

@@ -72,8 +72,11 @@ ssize_t mfrc_write(struct file *file, const char __user *user_buf,
     // TODO: communicate with internal buffer of card
 	struct mfrc_dev *dev;
     dev = file->private_data;
-
+    
+    // TODO: fix size, only takes 25 characters,
+    //       including command_name + size
     char buff[MAX_SIZE_BUFFER + 1];
+
     memset(buff, 0, MAX_SIZE_BUFFER + 1);
 
     if (copy_from_user(buff, user_buf, MAX_SIZE_BUFFER)) {
@@ -85,7 +88,7 @@ ssize_t mfrc_write(struct file *file, const char __user *user_buf,
     if (command == NULL) {
         return -EFAULT;
     }
-
+    
 	return process_command(command, dev);
 }
 
