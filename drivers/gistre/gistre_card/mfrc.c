@@ -1,5 +1,6 @@
 #include "mfrc.h"
 
+// TO CLEAN
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/fs.h>
@@ -7,6 +8,8 @@
 #include <linux/errno.h>
 #include <linux/slab.h>
 #include <linux/uaccess.h>
+
+#include "commands/command.h"
 
 MODULE_AUTHOR("antoine.sole, thomas.crambert");
 MODULE_LICENSE("GPL v2");

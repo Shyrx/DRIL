@@ -3,14 +3,13 @@
 
 #define MAX_SIZE_BUFFER 25
 
+// TO CLEAN
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/fs.h>
 #include <linux/cdev.h>
 #include <linux/errno.h>
 #include <linux/slab.h>
-
-#include "commands.h"
 
 MODULE_AUTHOR("antoine.sole, thomas.crambert");
 MODULE_LICENSE("GPL v2");
