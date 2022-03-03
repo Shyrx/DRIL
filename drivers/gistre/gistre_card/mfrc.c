@@ -51,7 +51,7 @@ ssize_t mfrc_read(struct file *file, char __user *buf,
 
     // check if data exists
     if (!dev->contains_data) {
-        pr_warn("No data in internal buffer\n");
+        pr_warn("\nNo data in internal buffer\n");
         return 0;
     }
 

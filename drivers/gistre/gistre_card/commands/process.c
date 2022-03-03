@@ -95,6 +95,7 @@ static ssize_t process_read(struct command *command, struct regmap *regmap, stru
     while (i < fifo_size)
     {
         int err = regmap_read(regmap, MFRC522_FIFODATAREG, mfrc_dev->data + i);
+        pr_info("Read: read '%c-%d'\n", *(mfrc_dev->data + i), *(mfrc_dev->data + i));
         if (err)
         {
             pr_err("Read: Failed to read value from card\n");
