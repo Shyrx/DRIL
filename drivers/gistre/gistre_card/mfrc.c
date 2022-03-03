@@ -79,7 +79,7 @@ ssize_t mfrc_write(struct file *file, const char __user *user_buf,
 
     memset(buff, 0, MAX_ACCEPTED_COMMAND_SIZE_+ 1);
 
-    if (copy_from_user(buff, user_buf, MAX_ACCEPTED_COMMAND_SIZE) {
+    if (copy_from_user(buff, user_buf, MAX_ACCEPTED_COMMAND_SIZE)) {
         pr_err("Failed to copy user");
         return -EFAULT;
     }
