@@ -1,5 +1,11 @@
 #include <linux/regmap.h>
 #include <linux/slab.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/fs.h>
+#include <linux/cdev.h>
+#include <linux/errno.h>
+#include <linux/uaccess.h>
 
 #include "command.h"
 #include "../../mfrc522.h"
@@ -103,6 +109,7 @@ static ssize_t process_read(struct command *command, struct regmap *regmap, stru
             break;
     }
     pr_info("Read: Successfully read '%d' bytes from card\n", fifo_size);
+    mfrc_dev->contains_data = true;
     return MAX_SIZE_BUFFER;
 }
 
