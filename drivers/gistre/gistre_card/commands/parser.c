@@ -1,7 +1,9 @@
-#include "commands.h"
+#include "command.h"
 
 #include <linux/slab.h>
 #include <linux/string.h>
+
+#include "../mfrc522.h"
 
 /**
  * @param buffer: source string to copy data from
@@ -13,39 +15,7 @@ static char* astrcpy(const char *buffer) {
     return new;
 }
 
-/**
- * @param type: the type of the command
- * @param nb_args: the args the command takes
- * @return an allocated struct with every allocated
- */
-struct command *command_init(enum COMMAND_TYPE type, int nb_args) {
-    struct command *command = kmalloc(sizeof(struct command), GFP_KERNEL);
-    command->args = kmalloc(sizeof(char *) * nb_args, GFP_KERNEL);
-    command->nb_arg = nb_args;
-    command->command_type = type;
-    return command;
-}
 
-/**
- * @param type: the type of the command
- * @param nb_args: the args the command takes
- * @return an allocated struct with every allocated
- */
-void command_free(struct command *command) {
-    int i = 0;
-    while (i < command->nb_arg) {
-        kfree(*(command->args + i));
-        i++;
-    }
-    kfree(command->args);
-    kfree(command);
-}
-
-
-static const char* map_command[] = {
-[COMMAND_WRITE] = "mem_write",
-[COMMAND_READ] = "mem_read",
-};
 
 /**
  * @param buffer: the buffer containing the data to process
@@ -83,7 +53,6 @@ static const map_parse_command jump_parse[] = {
 [COMMAND_READ] = parse_read,
 };
 
-// REFACTO WHEN WORKING
 struct command *parse_command(const char *buffer){
     pr_info("Parsing command: %s\n", buffer);
     enum COMMAND_TYPE command_type = 0;
@@ -99,10 +68,4 @@ struct command *parse_command(const char *buffer){
     }
 
     return jump_parse[command_type](buffer);
-}
-
-// TODO
-ssize_t exec_command(struct command *command, struct mfrc_dev *mfrc_dev) {
-    command_free(command);
-    return 0;
 }
