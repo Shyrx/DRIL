@@ -20,13 +20,10 @@ struct command {
     int nb_arg;
 };
 
-const char* map_command[] = {
-[COMMAND_WRITE] = "mem_write",
-[COMMAND_READ] = "mem_read",
-};
 
 struct command *parse_command(const char *buf);
 ssize_t exec_command(struct command *command, struct mfrc_dev *mfrc_dev);
 struct command *command_init(enum COMMAND_TYPE type, int nb_args);
 void command_free(struct command *command);
+
 #endif

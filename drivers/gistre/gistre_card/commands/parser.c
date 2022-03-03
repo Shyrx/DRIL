@@ -3,6 +3,11 @@
 #include <linux/slab.h>
 #include <linux/string.h>
 
+static const char* map_command[] = {
+[COMMAND_WRITE] = "mem_write",
+[COMMAND_READ] = "mem_read",
+};
+
 /**
  * @param buffer: source string to copy data from
  * @return an allocated string with data from buffer
@@ -12,8 +17,6 @@ static char* astrcpy(const char *buffer) {
     strcpy(new, buffer);
     return new;
 }
-
-
 
 /**
  * @param buffer: the buffer containing the data to process

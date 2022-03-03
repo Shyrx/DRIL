@@ -5,6 +5,11 @@
 #include "../../mfrc522.h"
 
 
+static const char* map_command[] = {
+[COMMAND_WRITE] = "mem_write",
+[COMMAND_READ] = "mem_read",
+};
+
 typedef ssize_t (*map_process_command)(struct command *command, struct regmap *regmap, struct mfrc_dev *mfrc_dev);
 
 // process_write
