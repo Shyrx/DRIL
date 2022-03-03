@@ -57,7 +57,7 @@ static ssize_t process_write(struct command *command, struct regmap *regmap, str
     }
     pr_info("Write: flush successful, starting to write\n");
     while (i < data_size) {
-        int err = regmap_write(regmap, MFRC522_FIFODATAREG, *((*command->args + 1) + i));
+        int err = regmap_write(regmap, MFRC522_FIFODATAREG, *(*(command->args + 1) + i));
         if (err)
         {
             pr_err("Write: Failed to write value to card\n");
