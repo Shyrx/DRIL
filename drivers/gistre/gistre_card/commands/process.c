@@ -1,7 +1,4 @@
 #include <linux/regmap.h>
-#include <linux/slab.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
 #include <linux/fs.h>
 #include <linux/cdev.h>
 #include <linux/errno.h>
@@ -16,78 +13,104 @@ static const char* map_command[] = {
 [COMMAND_READ] = "mem_read",
 };
 
+static const char* jump_debug_to_string[] = {
+[DEBUG_OFF] = "off",
+[DEBUG_INFO] = "on",
+[DEBUG_WARN] = "warn",
+[DEBUG_EXTRA] = "extra",
+[DEBUG_ERROR] = "error"
+};
+
 typedef ssize_t (*map_process_command)(struct command *command, struct regmap *regmap, struct mfrc_dev *mfrc_dev);
 
-static int check_arg_size(struct command *command)
+/**
+ * @param command: the struct command containing the arguments.
+ * @param log_level: the current log_level (currently unused).
+ * @return a positive integer if the arguments are valid.
+ */
+static int check_arg_size(struct command *command, int log_level)
 {
     long data_size;
     if (kstrtol(*command->args, 10, &data_size) != 0) {
-        pr_err("Couldn't parse the length of the data, was '%s'\n", *command->args);
+        // add log here ?
         return -1;
     }
     return data_size;
 }
 
+/**
+ * @param type: the struct command containing what is needed to perform a `write` call, need not to be checked beforehand.
+ * @param regmap: a struct containing the API used to communicate with the MFRC522 card.
+ * @param mfrc_dev: a struct containing the data related to the current context
+of the device.
+ * @return the number of byte read, or a negative number if an error occured.
+ */
 static ssize_t process_write(struct command *command, struct regmap *regmap, struct mfrc_dev *mfrc_dev)
 {
-    pr_info("Trying to write on card...\n");
-
+    PRINT_DEBUG("write: trying to write on card", DEBUG_EXTRA, mfrc_dev->debug_level);
     int data_size;
-    if ((data_size = check_arg_size(command)) < 0) {
-        pr_err("Write: argument check failed, aborting\n");
+    if ((data_size = check_arg_size(command, mfrc_dev->debug_level)) < 0) {
+        PRINT_DEBUG("write: check on argument failed", DEBUG_ERROR, mfrc_dev->debug_level)
         return -1;
     }
     if (data_size > INTERNAL_BUFFER_SIZE) {
-        pr_info("Write: data too large, truncating\n");
+        PRINT_DEBUG("write: data too large, truncating", DEBUG_INFO, mfrc_dev->debug_level);
         data_size = INTERNAL_BUFFER_SIZE;
     }
-    pr_info("Write: Data size is %d\n", data_size);
+
     // to flush all the data
     unsigned int i = 0;
     int rc = 0;
     if ((rc = regmap_write(regmap, MFRC522_FIFOLEVELREG, &i)))
     {
-        pr_err("Write: Couldn't flush card buffer: %d\n", rc);
+        PRINT_DEBUG("write: couldn't flush card, aborting", DEBUG_ERROR, mfrc_dev->debug_level);
         return -1;
     }
-    pr_info("Write: flush successful, starting to write\n");
     while (i < data_size) {
         int err = regmap_write(regmap, MFRC522_FIFODATAREG, *(*(command->args + 1) + i));
         if (err)
         {
+            PRINT_DEBUG("write: failed to write on card, aborting", DEBUG_ERROR, mfrc_dev->debug_level);
             pr_err("Write: Failed to write value to card\n");
             return -1;
         }
         i++;
     }
-    pr_info("Write: finished to write mandatory content, will fill with zeroes if necessary\n");
+    PRINT_DEBUG("write: finished to write mandatory content", DEBUG_EXTRA, mfrc_dev->debug_level);
+
     while (i < INTERNAL_BUFFER_SIZE) {
         int err = regmap_write(regmap, MFRC522_FIFODATAREG, 0);
         if (err)
         {
-            pr_err("Write: Failed to write zeroes to card\n");
+            PRINT_DEBUG("write: failed to fill FIFO", DEBUG_ERROR, mfrc_dev->debug_level)
             return -1;
         }
         i++;
     }
-    pr_info("Write: finished and successful\n");
+    PRINT_DEBUG("write: operation successful", DEBUG_INFO, mfrc_dev->debug_level);
     return INTERNAL_BUFFER_SIZE;
 }
 
-// process_read
+/**
+ * @param type: the struct command containing what is needed to perform a `read` call, need not to be checked beforehand.
+ * @param regmap: a struct containing the API used to communicate with the card.
+ * @param mfrc_dev: a struct containing the data related to the current context
+of the device.
+ * @return the number of byte read, or a negative number if an error occured.
+ */
 static ssize_t process_read(struct command *command, struct regmap *regmap, struct mfrc_dev *mfrc_dev)
 {
-    pr_info("Trying to read from card...\n");
+    PRINT_DEBUG("read: trying to read from card...", DEBUG_EXTRA, mfrc_dev->debug_level)
     memset(mfrc_dev->data, 0, INTERNAL_BUFFER_SIZE + 1);
     unsigned int fifo_size = 0;
     if (regmap_read(regmap, MFRC522_FIFOLEVELREG, &fifo_size))
     {
-        pr_err("Read: Failed to check fifo_size\n");
+        PRINT_DEBUG("read: Failed to check fifo_size", DEBUG_ERROR, mfrc_dev->debug_level)
         return -1;
     }
     if (fifo_size == 0)
     {
-        pr_err("Read: No data to read from card\n");
+        PRINT_DEBUG("read: no data to read from card", DEBUG_ERROR, mfrc_dev->debug_level)
         return INTERNAL_BUFFER_SIZE;
     }
     int i = 0;
@@ -96,21 +119,57 @@ static ssize_t process_read(struct command *command, struct regmap *regmap, stru
         int err = regmap_read(regmap, MFRC522_FIFODATAREG, mfrc_dev->data + i);
         if (err)
         {
-            pr_err("Read: Failed to read value from card\n");
+            PRINT_DEBUG("read: failed to read value from card", DEBUG_ERROR, mfrc_dev->debug_level)
             return -1;
         }
         if (mfrc_dev->data + i == 0)
-            break;
+            break; // TODO: add log
         i++;
     }
-    pr_info("Read: Successfully read '%d' bytes from card\n", fifo_size);
+    PRINT_DEBUG("read: operation successful", DEBUG_EXTRA, mfrc_dev->debug_level);
     mfrc_dev->contains_data = true;
     return INTERNAL_BUFFER_SIZE;
+}
+
+// refacto so that the user can decide to toggle specific mode
+// something like debug:off:warn or debug:on:extra
+// by default, having debug:on should enable all warnings and
+// having debug:off should disable them all
+/**
+ * @param command: the struct command containing what is needed to perform a `debug` call, need not to be checked beforehand.
+ * @param regmap: a struct containing the API used to communicate with the card.
+ * @param mfrc_dev: a struct containing the data related to the current context
+of the device.
+ * @return a negative integer if an error occured, zero otherwise.
+ */
+static ssize_t process_debug(struct command *command, struct regmap *regmap, struct mfrc_dev *mfrc_dev) {
+    // regmap is useless here
+    int i = 0;
+    int current_level = mfrc_dev->debug_level;
+    while (i < command->nb_arg) {
+        enum DEBUG_LEVEL debug_level = find_debug_level(*(command->args + i));
+        if (debug_level == DEBUG_NOT_FOUND) {
+            // TODO: add log
+            PRINT_DEBUG("debug: level not found", DEBUG_WARN, mfrc_dev->debug_level)
+            return -1;
+        }
+
+        if (debug_level == DEBUG_OFF) {
+            PRINT_DEBUG("debug: disabling debug_mode", DEBUG_WARN, mfrc_dev->debug_level)
+            mfrc_dev->debug_level = DEBUG_OFF;
+            return 0;
+        }
+        current_level |= (debug_level ) ;
+    }
+    PRINT_DEBUG("debug: mode updated successfully", DEBUG_EXTRA, mfrc_dev->debug_level);
+    mfrc_dev->debug_level = current_level;
+    return 0;
 }
 
 static const map_process_command jump_process[] = {
 [COMMAND_WRITE] = process_write,
 [COMMAND_READ] = process_read,
+[COMMAND_DEBUG] = process_debug
 };
 
 static struct regmap *find_regmap(void)
