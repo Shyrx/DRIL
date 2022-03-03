@@ -20,7 +20,7 @@ static ssize_t process_read(struct command *command, struct regmap *regmap, stru
     int i = 0;
     while (i < MAX_SIZE_BUFFER)
     {
-        int err = regmap_read(map, FIFODATAREG, mfrc_dev->data + i);
+        int err = regmap_read(regmap, MFRC522_FIFODATAREG, mfrc_dev->data + i);
         if (err)
         {
             if (i > 0) {
@@ -39,7 +39,7 @@ static const map_process_command jump_process[] = {
 [COMMAND_READ] = process_read,
 };
 
-static struct regmap *find_regmap()
+static struct regmap *find_regmap(void)
 {
     return mfrc522_get_regmap(dev_to_mfrc522(mfrc522_find_dev()));
 }
