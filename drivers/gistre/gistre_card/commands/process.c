@@ -38,6 +38,7 @@ static ssize_t process_write(struct command *command, struct regmap *regmap, str
         return -1;
     }
     if (data_size > MAX_SIZE_BUFFER) {
+        pr_info("Write: data too large, truncating\n");
         data_size = MAX_SIZE_BUFFER;
     }
     // to flush all the data
@@ -45,27 +46,31 @@ static ssize_t process_write(struct command *command, struct regmap *regmap, str
     int rc = 0;
     if ((rc = regmap_write(regmap, MFRC522_FIFOLEVELREG | MFRC522_FIFOLEVELREG_FLUSH, &i)))
     {
-        pr_err("Couldn't flush card buffer: %d\n", rc);
+        pr_err("Write: Couldn't flush card buffer: %d\n", rc);
         return -1;
     }
-
+    pr_info("Write: flush successful, starting to write\n");
     while (i < data_size) {
         int err = regmap_write(regmap, MFRC522_FIFODATAREG, mfrc_dev->data + i);
         if (err)
         {
-            pr_err("Failed to write value to card\n");
+            pr_err("Write: Failed to write value to card\n");
             return -1;
         }
+        i++;
     }
+    pr_info("Write: finished to write mandatory content, will fill with zeroes if necessary\n");
     int zero = 0;
     while (i < MAX_SIZE_BUFFER) {
         int err = regmap_write(regmap, MFRC522_FIFODATAREG, &zero);
         if (err)
         {
-            pr_err("Failed to write zeroes to card\n");
+            pr_err("Write: Failed to write zeroes to card\n");
             return -1;
         }
+        i++;
     }
+    pr_info("Write: finished and successful\n");
     return MAX_SIZE_BUFFER;
 }
 
@@ -77,12 +82,12 @@ static ssize_t process_read(struct command *command, struct regmap *regmap, stru
     unsigned int fifo_size = 0;
     if (regmap_read(regmap, MFRC522_FIFOLEVELREG, &fifo_size))
     {
-        pr_err("Failed to check fifo_size\n");
+        pr_err("Read: Failed to check fifo_size\n");
         return -1;
     }
     if (fifo_size == 0)
     {
-        pr_err("No data to read from card\n");
+        pr_err("Read: No data to read from card\n");
         return MAX_SIZE_BUFFER;
     }
     int i = 0;
@@ -91,13 +96,13 @@ static ssize_t process_read(struct command *command, struct regmap *regmap, stru
         int err = regmap_read(regmap, MFRC522_FIFODATAREG, mfrc_dev->data + i);
         if (err)
         {
-            pr_err("Failed to read value from card\n");
+            pr_err("Read: Failed to read value from card\n");
             return -1;
         }
         if (mfrc_dev->data + i == 0)
             break;
     }
-    pr_info("Successfully read '%d' bytes from card\n", fifo_size);
+    pr_info("Read: Successfully read '%d' bytes from card\n", fifo_size);
     return MAX_SIZE_BUFFER;
 }
 
