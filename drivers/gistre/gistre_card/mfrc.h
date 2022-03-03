@@ -1,7 +1,8 @@
 #ifndef MFRC_H
 #define MFRC_H
 
-#define MAX_SIZE_BUFFER 25
+#define MAX_ACCEPTED_COMMAND_SIZE = 50;
+#define INTERNAL_BUFFER_SIZE 25
 
 // TO CLEAN
 #include <linux/kernel.h>
@@ -17,7 +18,7 @@ MODULE_LICENSE("GPL v2");
 struct mfrc_dev {
 	struct cdev cdev;
     bool contains_data;
-    unsigned int data[MAX_SIZE_BUFFER + 1]; // + 1 to be null terminated
+    unsigned int data[INTERNAL_BUFFER_SIZE + 1]; // + 1 to be null terminated
 };
 
 int mfrc_open(struct inode *inode, struct file *file);
