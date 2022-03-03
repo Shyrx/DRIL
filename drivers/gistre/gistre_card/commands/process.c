@@ -90,6 +90,7 @@ static ssize_t process_read(struct command *command, struct regmap *regmap, stru
         pr_err("Read: No data to read from card\n");
         return INTERNAL_BUFFER_SIZE;
     }
+    pr_info("Read: Card buffer size is %d\n", fifo_size);
     int i = 0;
     while (i < fifo_size)
     {
@@ -99,8 +100,11 @@ static ssize_t process_read(struct command *command, struct regmap *regmap, stru
             pr_err("Read: Failed to read value from card\n");
             return -1;
         }
-        if (mfrc_dev->data + i == 0)
+        if (*(mfrc_dev->data + i) == 0)
+        {
+            pr_info("Read: Found a '0' at %d\n", i);
             break;
+        }
         i++;
     }
     pr_info("Read: Successfully read '%d' bytes from card\n", fifo_size);
