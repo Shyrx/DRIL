@@ -22,7 +22,7 @@ struct command {
 
 
 struct command *parse_command(const char *buf);
-ssize_t exec_command(struct command *command, struct mfrc_dev *mfrc_dev);
+ssize_t process_command(struct command *command, struct mfrc_dev *mfrc_dev);
 struct command *command_init(enum COMMAND_TYPE type, int nb_args);
 void command_free(struct command *command);
 

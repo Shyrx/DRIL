@@ -67,6 +67,6 @@ struct command *parse_command(const char *buffer){
         pr_err("command not found: '%s'\n", buffer);
         return NULL;
     }
-
+    pr_info("Command found: %s\n", buffer);
     return jump_parse[command_type](buffer);
 }
