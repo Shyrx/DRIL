@@ -75,7 +75,7 @@ ssize_t mfrc_write(struct file *file, const char __user *user_buf,
     
     // TODO: fix size, only takes 25 characters,
     //       including command_name + size
-    char buff[MAX_ACCEPTED_COMMAND_SIZE_+ 1];
+    char buff[MAX_ACCEPTED_COMMAND_SIZE + 1];
 
     memset(buff, 0, MAX_ACCEPTED_COMMAND_SIZE_+ 1);
 
