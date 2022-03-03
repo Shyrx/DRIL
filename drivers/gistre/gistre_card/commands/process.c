@@ -50,7 +50,7 @@ static ssize_t process_write(struct command *command, struct regmap *regmap, str
     // to flush all the data
     unsigned int i = 0;
     int rc = 0;
-    if ((rc = regmap_write(regmap, MFRC522_FIFOLEVELREG | MFRC522_FIFOLEVELREG_FLUSH, &i)))
+    if ((rc = regmap_write(regmap, MFRC522_FIFOLEVELREG, &i)))
     {
         pr_err("Write: Couldn't flush card buffer: %d\n", rc);
         return -1;
@@ -107,6 +107,7 @@ static ssize_t process_read(struct command *command, struct regmap *regmap, stru
         }
         if (mfrc_dev->data + i == 0)
             break;
+        i++;
     }
     pr_info("Read: Successfully read '%d' bytes from card\n", fifo_size);
     mfrc_dev->contains_data = true;
