@@ -7,7 +7,7 @@
 /**
  * @param type: the type of the command
  * @param nb_args: the args the command takes
- * @return an allocated struct with every allocated
+ * @return an allocated struct with every field correctly allocated
  */
 struct command *command_init(enum COMMAND_TYPE type, int nb_args)
 {
@@ -36,7 +36,7 @@ void command_free(struct command *command)
 	kfree(command);
 }
 
-// ##### PARSING #####
+// ############################ PARSING #################################
 
 static const char * const map_command[] = {
 [COMMAND_WRITE] = "mem_write",
@@ -52,13 +52,19 @@ static const map_parse_command jump_parse[] = {
 [COMMAND_DEBUG] = parse_debug,
 };
 
+/**
+ * @param buffer: the command to parse
+ * @param log_level: current log enable
+ * @return a struct command corresponding to the parsed command. Caution,
+ * only sanity checks are done.
+ */
 struct command *parse_command(const char *buffer, int log_level)
 {
 	pr_info("Parsing command: %s\n", buffer);
 	enum COMMAND_TYPE command_type = 0;
 	// kind of ugly, move into dedicated function ?
 	while (command_type != COMMAND_NOT_FOUND
-		   && strncmp(buffer, map_command[command_type],
+			&& strncmp(buffer, map_command[command_type],
 					  strlen(map_command[command_type])) != 0) {
 		command_type++;
 	}
@@ -70,7 +76,7 @@ struct command *parse_command(const char *buffer, int log_level)
 	return jump_parse[command_type](buffer, log_level);
 }
 
-// ##### PROCESSING #####
+// ############################ PROCESSING #################################
 
 typedef int (*map_process_command)
 (struct command *command, struct regmap *regmap,

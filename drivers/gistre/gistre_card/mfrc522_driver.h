@@ -21,7 +21,7 @@ struct mfrc522_driver_dev {
 
 int mfrc522_driver_open(struct inode *inode, struct file *file);
 int mfrc522_driver_release(struct inode *inode /* unused */,
-			   struct file *file /* unused */);
+				struct file *file /* unused */);
 ssize_t mfrc522_driver_read(struct file *file, char __user *buf,
 				size_t len, loff_t *off /* unused */);
 ssize_t mfrc522_driver_write(struct file *file, const char __user *buf,

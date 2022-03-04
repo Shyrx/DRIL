@@ -15,6 +15,17 @@ static const char * const jump_debug_to_string[] = {
 [LOG_ERROR] = "error"
 };
 
+enum DEBUG_OPE {
+	 DEBUG_UNKOWN = -1,
+	 DEBUG_ON = 0,
+	 DEBUG_OFF = 1,
+	 DEBUG_STATUS = 2,
+};
+
+/**
+ * @param log_level: the log level to get the string representation
+ * @return the string representation of the given log_level
+ */
 const char *enum_log_to_string_message(int log_level)
 {
 	switch (log_level) {
@@ -45,21 +56,22 @@ struct command *parse_debug(const char *buffer, int log_level)
 	return get_args(command, buffer, nb_args, DEBUG_NAME);
 }
 
-static int set_log(char *buffer, int log_level)
+/**
+ * @param buffer: the buffer containing the command
+ * @return an enum with value corresponding to the kind of the debug operation to perform
+ */
+static enum DEBUG_OPE set_log(char *buffer, int log_level)
 {
-	if (strcmp(buffer, "on") == 0) {
-	LOG("debug: enabling log levels...", LOG_EXTRA, log_level);
-	return 1;
-	}
-
-	if (strcmp(buffer, "off") == 0) {
-	LOG("debug: disabling log levels...", LOG_EXTRA, log_level);
-	return 0;
-	}
-
-	LOG("debug: first argument should be 'on' or 'off', was something else",
-		LOG_ERROR, log_level);
-	return -1;
+	 if (strcmp(buffer, "on") == 0) {
+		  LOG("debug: enabling log levels...", LOG_EXTRA, log_level);
+		  return DEBUG_ON;
+	 }
+	 if (strcmp(buffer, "off") == 0) {
+		  LOG("debug: disabling log levels...", LOG_EXTRA, log_level);
+		  return DEBUG_OFF;
+	 }
+	 LOG("debug: first argument should be 'on' or 'off', was something else", LOG_ERROR, log_level);
+	 return DEBUG_UNKOWN;
 }
 
 static enum LOG_LEVEL find_log_level(char *level, int log_level)
@@ -67,7 +79,7 @@ static enum LOG_LEVEL find_log_level(char *level, int log_level)
 	int i = 1;
 	// TODO ugly, should be changed
 	while (i < LOG_NOT_FOUND
-		   && strcmp(level, jump_debug_to_string[i]) != 0)
+			&& strcmp(level, jump_debug_to_string[i]) != 0)
 		i <<= 1;
 
 	if (i == LOG_NOT_FOUND)
@@ -84,52 +96,41 @@ static enum LOG_LEVEL find_log_level(char *level, int log_level)
 of the device.
  * @return a negative integer if an error occured, zero otherwise.
  */
-int process_debug(struct command *command, struct regmap *regmap,
-				  struct mfrc522_driver_dev *mfrc522_driver_dev)
+int process_debug(struct command *command, struct regmap *regmap, struct mfrc522_driver_dev *mfrc522_driver_dev)
 {
-	int current_level = mfrc522_driver_dev->log_level;
-	int set = set_log(command->args[0], mfrc522_driver_dev->log_level);
+	 int current_level = mfrc522_driver_dev->log_level;
+	 enum DEBUG_OPE set = set_log(command->args[0], mfrc522_driver_dev->log_level);
+	 if (set == DEBUG_UNKOWN)
+		  return -1;
+	 else if (set == DEBUG_STATUS)
+		  // TODO
+		  // print_currently_enabled_logs();
+		  return 0;
+	 if (command->nb_arg == 1) {
+		  if (set) {
+				mfrc522_driver_dev->log_level = ENABLE_ALL_LOGS;
+				LOG("debug: enabling all logs", LOG_INFO, mfrc522_driver_dev->log_level);
+		  } else {
+				LOG("debug: disabling all logs", LOG_INFO, mfrc522_driver_dev->log_level);
+				mfrc522_driver_dev->log_level = 0;
+		  }
+		  return 0;
+	 }
+	 int i = 1;
+	 while (i < command->nb_arg) {
+		  enum LOG_LEVEL log_level = find_log_level(*(command->args + i), mfrc522_driver_dev->log_level);
 
-	if (set == -1)
-		return -1;
-	else if (set == 2) {
-		// TODO
-		// print_currently_enabled_logs();
-		return 0;
-	}
-	if (command->nb_arg == 1) {
-		if (set) {
-			mfrc522_driver_dev->log_level = ENABLE_ALL_LOGS;
-			LOG("debug: enabling all logs",
-				LOG_INFO, mfrc522_driver_dev->log_level);
-		} else {
-			LOG("debug: disabling all logs",
-				LOG_INFO, mfrc522_driver_dev->log_level);
-			mfrc522_driver_dev->log_level = 0;
-		}
-		return 0;
-	}
+		  if (log_level == LOG_NOT_FOUND)
+				return -1;
 
-	int i = 1;
+		  if (set == DEBUG_ON)
+				current_level |= log_level;
+		  else
+				current_level &= ~log_level;
+		  i++;
+	 }
 
-	while (i < command->nb_arg) {
-		enum LOG_LEVEL log_level = find_log_level(
-			*(command->args + i),
-			mfrc522_driver_dev->log_level);
-
-		if (log_level == LOG_NOT_FOUND)
-			return -1;
-
-		if (set)
-			current_level |= log_level;
-		else
-			current_level &= ~log_level;
-
-		i++;
-	}
-
-	LOG("debug: log mode updated successfully",
-		LOG_EXTRA, mfrc522_driver_dev->log_level);
-	mfrc522_driver_dev->log_level = current_level;
-	return 0;
+	 LOG("debug: log mode updated successfully", LOG_EXTRA, mfrc522_driver_dev->log_level);
+	 mfrc522_driver_dev->log_level = current_level;
+	 return 0;
 }

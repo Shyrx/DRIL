@@ -56,7 +56,7 @@ int process_write(struct command *command, struct regmap *regmap,
 
 	while (i < data_size) {
 		int err = regmap_write(regmap, MFRC522_FIFODATAREG,
-							   *(*(command->args + 1) + i));
+								*(*(command->args + 1) + i));
 		if (err) {
 			LOG("write: failed to write on card, abordting", LOG_ERROR,
 				mfrc522_driver_dev->log_level);

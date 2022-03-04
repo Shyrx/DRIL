@@ -101,9 +101,9 @@ ssize_t mfrc522_driver_write(struct file *file, const char __user *user_buf,
  */
 
 static const struct file_operations mfrc_fops = {
-	.owner   = THIS_MODULE,
+	.owner	= THIS_MODULE,
 	.read	= mfrc522_driver_read,
-	.write   = mfrc522_driver_write,
+	.write	= mfrc522_driver_write,
 	.open	= mfrc522_driver_open,
 	.release = mfrc522_driver_release
 	/* Only use the kernel's defaults */
@@ -143,7 +143,6 @@ static int mfrc522_driver_init(void)
 	ret = alloc_chrdev_region(&dev, 0, 1, devname);
 	if (ret < 0)
 		return 1;
-
 	major = MAJOR(dev);
 	pr_info("Got major %d\n", major);
 
