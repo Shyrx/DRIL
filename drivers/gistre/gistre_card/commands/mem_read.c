@@ -8,8 +8,8 @@
  */
 struct command *parse_read(const char *buffer) 
 {
-    struct command *command = command_init(COMMAND_READ, 0);
-    return command;
+	struct command *command = command_init(COMMAND_READ, 0);
+	return command;
 }
 
 /**
@@ -21,41 +21,41 @@ of the device.
  */
 static ssize_t process_read(struct command *command, struct regmap *regmap, struct mfrc522_driver_dev *mfrc522_driver_dev)
 {
-    // TODO Check number arg
-    LOG("read: trying to read from card...", LOG_EXTRA, mfrc522_driver_dev->log_level)
-    memset(mfrc522_driver_dev->data, 0, INTERNAL_BUFFER_SIZE + 1);
-    unsigned int fifo_size = 0;
+	// TODO Check number arg
+	LOG("read: trying to read from card...", LOG_EXTRA, mfrc522_driver_dev->log_level)
+	memset(mfrc522_driver_dev->data, 0, INTERNAL_BUFFER_SIZE + 1);
+	unsigned int fifo_size = 0;
 
-    if (regmap_read(regmap, MFRC522_FIFOLEVELREG, &fifo_size))
-    {
+	if (regmap_read(regmap, MFRC522_FIFOLEVELREG, &fifo_size))
+	{
 	LOG("read: Failed to check fifo_size", LOG_ERROR, mfrc522_driver_dev->log_level)
 	return -1;
-    }
-    if (fifo_size == 0)
-    {
+	}
+	if (fifo_size == 0)
+	{
 	LOG("read: no data to read from card", LOG_WARN, mfrc522_driver_dev->log_level)
 	return INTERNAL_BUFFER_SIZE;
-    }
-    pr_info("Read: Card buffer size is %d\n", fifo_size);
-    int i = 0;
+	}
+	pr_info("Read: Card buffer size is %d\n", fifo_size);
+	int i = 0;
 
-    while (i < fifo_size)
-    {
+	while (i < fifo_size)
+	{
 	int err = regmap_read(regmap, MFRC522_FIFODATAREG, mfrc522_driver_dev->data + i);
 
 	if (err)
 	{
-	    LOG("read: failed to read value from card", LOG_ERROR, mfrc522_driver_dev->log_level)
-	    return -1;
+		LOG("read: failed to read value from card", LOG_ERROR, mfrc522_driver_dev->log_level)
+		return -1;
 	}
 	if (*(mfrc522_driver_dev->data + i) == 0)
 	{
-	    LOG("read: null byte received", LOG_WARN, mfrc522_driver_dev->log_level);
-	    break;
+		LOG("read: null byte received", LOG_WARN, mfrc522_driver_dev->log_level);
+		break;
 	}
 	i++;
-    }
-    LOG("read: operation successful", LOG_EXTRA, mfrc522_driver_dev->log_level);
-    mfrc522_driver_dev->contains_data = true;
-    return INTERNAL_BUFFER_SIZE;
+	}
+	LOG("read: operation successful", LOG_EXTRA, mfrc522_driver_dev->log_level);
+	mfrc522_driver_dev->contains_data = true;
+	return INTERNAL_BUFFER_SIZE;
 }

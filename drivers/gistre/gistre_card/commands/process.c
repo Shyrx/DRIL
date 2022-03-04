@@ -11,11 +11,11 @@
 // TODO Move to utils
 static int check_arg_size(struct command *command, int log_level)
 {
-    long data_size;
+	long data_size;
 
-    if (kstrtol(*command->args, 10, &data_size) != 0) {
+	if (kstrtol(*command->args, 10, &data_size) != 0) {
 	// add log here ?
 	return -1;
-    }
-    return data_size;
+	}
+	return data_size;
 }
