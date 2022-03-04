@@ -71,14 +71,31 @@ int process_write(struct command *command, struct regmap *regmap,
 	while (i < INTERNAL_BUFFER_SIZE) {
 		int err = regmap_write(regmap, MFRC522_FIFODATAREG, 0);
 
-		if (err) {
-			LOG("write: failed to fill FIFO with zeroes", LOG_ERROR,
-				mfrc522_driver_dev->log_level);
-				return -1;
-		}
-		i++;
+    unsigned int i = 0;
+    unsigned int data_wrote[25];
 
-	}
-	LOG("write: operation successful", LOG_EXTRA, mfrc522_driver_dev->log_level);
-	return INTERNAL_BUFFER_SIZE;
+    memset(data_wrote, 0, 25);
+    while (i < data_size) {
+        int err = regmap_write(regmap, MFRC522_FIFODATAREG, *(*(command->args + 1) + i));
+        if (err) {
+            LOG("write: failed to write on card, aborting", LOG_ERROR, mfrc522_driver_dev->log_level);
+            return -1;
+        }
+        i++;
+        data_wrote[i] = *(*(command->args + 1) + i);
+    }
+    LOG("write: finished to write user content", LOG_EXTRA, mfrc522_driver_dev->log_level);
+
+    while (i < INTERNAL_BUFFER_SIZE) {
+        int err = regmap_write(regmap, MFRC522_FIFODATAREG, 0);
+        if (err) {
+            LOG("write: failed to fill FIFO with zeroes", LOG_ERROR, mfrc522_driver_dev->log_level)
+            return -1;
+        }
+        i++;
+        data_wrote[i] = 0;
+    }
+    LOG("write: operation successful", LOG_EXTRA, mfrc522_driver_dev->log_level);
+    dump_trace(data_wrote, false, mfrc522_driver_dev->log_level);
+    return INTERNAL_BUFFER_SIZE;
 }

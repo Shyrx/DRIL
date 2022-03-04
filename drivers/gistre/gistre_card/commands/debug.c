@@ -63,14 +63,18 @@ static void print_enabled_log_levels(int log_level) {
     int current_size = 0;
     while (i < LOG_NOT_FOUND) {
         if (i & log_level) {
-            current_size += snprintf(enabled_logs + current_size, current_size, "%s%s",
-                             current_size == 0 ? "" : ", ", jump_debug_to_string[i]);
-            LOG(jump_debug_to_string[i], LOG_INFO, LOG_INFO);
+            const char *level_to_string = jump_debug_to_string[i];
+            current_size += snprintf(&enabled_logs[current_size],
+                                     current_size + strlen(level_to_string) + 1, "%s%s",
+                                     current_size == 0 ? "" : ", ", level_to_string);
         }
         i <<= 1;
     }
-    snprintf(enabled_logs, 200, "Enabled levels of debug: %s", enabled_logs);
-    LOG(enabled_logs, LOG_EXTRA, LOG_EXTRA);
+    char to_print[250];
+    memset(to_print, 0, 200);
+    snprintf(to_print, current_size + strlen("Enabled levels of debug: ") + 1,
+             "Enabled levels of debug: %s", enabled_logs);
+    LOG(to_print, LOG_EXTRA, LOG_EXTRA);
 }
 
 /**

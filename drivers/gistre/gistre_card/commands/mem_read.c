@@ -59,6 +59,7 @@ int process_read(struct command *command, struct regmap *regmap,
 		  return -1;
 
 	 LOG("read: operation successful", LOG_EXTRA, mfrc522_driver_dev->log_level);
+	 dump_trace(mfrc522_driver_dev->data, true, mfrc522_driver_dev->log_level);
 	 mfrc522_driver_dev->contains_data = true;
 	 return INTERNAL_BUFFER_SIZE;
 }
