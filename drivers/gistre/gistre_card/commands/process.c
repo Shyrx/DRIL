@@ -124,16 +124,18 @@ static ssize_t process_read(struct command *command, struct regmap *regmap, stru
         LOG("read: no data to read from card", LOG_WARN, mfrc_dev->debug_level)
         return INTERNAL_BUFFER_SIZE;
     }
+    pr_info("Read: Card buffer size is %d\n", fifo_size);
     int i = 0;
     while (i < fifo_size)
     {
         int err = regmap_read(regmap, MFRC522_FIFODATAREG, mfrc_dev->data + i);
+        pr_info("Read: read '%c-%d'\n", *(mfrc_dev->data + i), *(mfrc_dev->data + i));
         if (err)
         {
             LOG("read: failed to read value from card", LOG_ERROR, mfrc_dev->debug_level)
             return -1;
         }
-        if (mfrc_dev->data + i == 0)
+        if (*(mfrc_dev->data + i) == 0)
         {
             LOG("read: null byte received", LOG_WARN, mfrc_dev->debug_level);
             break;
