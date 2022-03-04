@@ -14,7 +14,6 @@ struct command *parse_write(const char *buffer, int log_level)
 {
 
 	if (count_separator_occurence(buffer, ':') != WRITE_NB_ARG) {
-		// TODO: pass log level in args
 		LOG("write: too many or not enough arguments given, expected 2", LOG_ERROR, log_level);
 		return NULL;
 	}
@@ -37,7 +36,7 @@ int process_write(struct command *command, struct regmap *regmap,
 {
 	LOG("write: trying to write on card", LOG_EXTRA,
 		mfrc522_driver_dev->log_level);
-	int data_size;
+	int data_size = check_arg_size(command, mfrc522_driver_dev->log_level);
 
 	if (data_size < 0) {
 		LOG("write: check on arguments failed", LOG_ERROR,
@@ -66,6 +65,8 @@ int process_write(struct command *command, struct regmap *regmap,
 		i++;
 	}
 
+	LOG("write: finished to write user content", LOG_EXTRA,
+		mfrc522_driver_dev->log_level);
 
 	while (i < INTERNAL_BUFFER_SIZE) {
 		int err = regmap_write(regmap, MFRC522_FIFODATAREG, 0);

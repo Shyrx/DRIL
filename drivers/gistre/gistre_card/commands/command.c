@@ -64,10 +64,9 @@ struct command *parse_command(const char *buffer, int log_level)
 	}
 
 	if (command_type == COMMAND_NOT_FOUND) {
-		pr_err("command not found: '%s'\n", buffer);
 		return NULL;
 	}
-	pr_info("Command found: %s\n", map_command[command_type]);
+
 	return jump_parse[command_type](buffer, log_level);
 }
 

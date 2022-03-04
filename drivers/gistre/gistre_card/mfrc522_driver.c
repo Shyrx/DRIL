@@ -33,14 +33,15 @@ int mfrc522_driver_release(struct inode *inode /* unused */,
 
 ssize_t mfrc522_driver_read(struct file *file, char __user *buf,
 	size_t len, loff_t *off /* unused */) {
-	struct mfrc522_driver_dev *dev;
+	struct mfrc522_driver_dev *mfrc522_driver_dev;
 
-	dev = file->private_data;
+	mfrc522_driver_dev = file->private_data;
 
 	// check if data exists
-	if (!dev->contains_data) {
-	pr_warn("\nNo data in internal buffer\n");
-	return 0;
+	if (!mfrc522_driver_dev->contains_data) {
+		LOG("read: no data to read from internal buffer",
+			LOG_WARN, mfrc522_driver_dev->log_level);
+		return 0;
 	}
 
 	// Copying our internal buffer (int *) into a string (char *)
@@ -50,45 +51,47 @@ ssize_t mfrc522_driver_read(struct file *file, char __user *buf,
 	int i = 0;
 
 	while (i < INTERNAL_BUFFER_SIZE) {
-	data[i] = dev->data[i];
-	i++;
+		data[i] = mfrc522_driver_dev->data[i];
+		i++;
 	}
 
 	// Flush internal buffer
 	if (copy_to_user(buf, data, INTERNAL_BUFFER_SIZE + 1)) {
-	pr_err("Failed to copy data to user\n");
-	return -EFAULT;
+		LOG("read: failed to copy data to user",
+			LOG_ERROR, mfrc522_driver_dev->log_level);
+		return -EFAULT;
 	}
 
 	// Reset internal buffer
-	memset(dev->data, 0, INTERNAL_BUFFER_SIZE + 1);
-	dev->contains_data = false;
+	memset(mfrc522_driver_dev->data, 0, INTERNAL_BUFFER_SIZE + 1);
+	mfrc522_driver_dev->contains_data = false;
 
 	return INTERNAL_BUFFER_SIZE;
 }
 
 ssize_t mfrc522_driver_write(struct file *file, const char __user *user_buf,
 	size_t len, loff_t *off /* unused */) {
-	struct mfrc522_driver_dev *dev;
+	struct mfrc522_driver_dev *mfrc522_driver_dev;
 
-	dev = file->private_data;
+	mfrc522_driver_dev = file->private_data;
 
 	char buff[MAX_ACCEPTED_COMMAND_SIZE + 1];
 
 	memset(buff, 0, MAX_ACCEPTED_COMMAND_SIZE + 1);
 
 	if (copy_from_user(buff, user_buf, MAX_ACCEPTED_COMMAND_SIZE)) {
-	pr_err("Failed to copy user");
-	return -EFAULT;
+		LOG("write: failed to copy data from user",
+			LOG_ERROR, mfrc522_driver_dev->log_level);
+		return -EFAULT;
 	}
 
 	struct command *command = parse_command(buff);
 
 	if (command == NULL)
-	return -EFAULT;
+		return -EFAULT;
 
-	if (process_command(command, dev) < 0)
-	return -EFAULT;
+	if (process_command(command, mfrc522_driver_dev) < 0)
+		return -EFAULT;
 
 	return len;
 }
