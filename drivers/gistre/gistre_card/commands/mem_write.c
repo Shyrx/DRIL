@@ -12,8 +12,7 @@
  */
 struct command *parse_write(const char* buffer, int log_level) {
 
-    if (count_separator_occurence(buffer, ':') != WRITE_NB_ARG)
-    {
+    if (count_separator_occurence(buffer, ':') != WRITE_NB_ARG) {
         LOG("write: too many or not enough arguments given, expected 2", LOG_ERROR, log_level);
         return NULL;
     }
@@ -48,8 +47,7 @@ int process_write(struct command *command, struct regmap *regmap, struct mfrc522
     unsigned int i = 0;
     while (i < data_size) {
         int err = regmap_write(regmap, MFRC522_FIFODATAREG, *(*(command->args + 1) + i));
-        if (err)
-        {
+        if (err) {
             LOG("write: failed to write on card, aborting", LOG_ERROR, mfrc522_driver_dev->log_level);
             return -1;
         }
@@ -59,8 +57,7 @@ int process_write(struct command *command, struct regmap *regmap, struct mfrc522
 
     while (i < INTERNAL_BUFFER_SIZE) {
         int err = regmap_write(regmap, MFRC522_FIFODATAREG, 0);
-        if (err)
-        {
+        if (err) {
             LOG("write: failed to fill FIFO with zeroes", LOG_ERROR, mfrc522_driver_dev->log_level)
             return -1;
         }

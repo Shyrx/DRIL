@@ -44,8 +44,7 @@ ssize_t mfrc522_driver_read(struct file *file, char __user *buf,
     char data[INTERNAL_BUFFER_SIZE + 1];
     memset(data, 0, INTERNAL_BUFFER_SIZE + 1);
     int i = 0;
-    while (i < INTERNAL_BUFFER_SIZE)
-    {
+    while (i < INTERNAL_BUFFER_SIZE) {
         data[i] = mfrc522_driver_dev->data[i];
         i++;
     }
@@ -129,9 +128,8 @@ static int mfrc522_driver_init(void) {
 
 	/* Allocate major */
 	ret = alloc_chrdev_region(&dev, 0, 1, devname);
-	if (ret < 0) {
+	if (ret < 0)
 		return 1;
-	}
     major = MAJOR(dev);
     pr_info("Got major %d\n", major);
 

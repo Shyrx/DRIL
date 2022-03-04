@@ -19,7 +19,6 @@ enum DEBUG_OPE {
     DEBUG_ON = 0,
     DEBUG_OFF = 1,
     DEBUG_STATUS = 2,
-
 };
 
 /**
@@ -56,13 +55,11 @@ struct command *parse_debug(const char* buffer, int log_level) {
  * @return an enum with value corresponding to the kind of the debug operation to perform
  */
 static enum DEBUG_OPE set_log(char *buffer, int log_level) {
-    if (strcmp(buffer, "on") == 0)
-    {
+    if (strcmp(buffer, "on") == 0) {
         LOG("debug: enabling log levels...", LOG_EXTRA, log_level);
         return DEBUG_ON;
     }
-    if (strcmp(buffer, "off") == 0)
-    {
+    if (strcmp(buffer, "off") == 0) {
         LOG("debug: disabling log levels...", LOG_EXTRA, log_level);
         return DEBUG_OFF;
     }
@@ -73,13 +70,11 @@ static enum DEBUG_OPE set_log(char *buffer, int log_level) {
 static enum LOG_LEVEL find_log_level(char *level, int log_level)
 {
     int i = 1;
-    while (i < LOG_NOT_FOUND && strcmp(level, jump_debug_to_string[i]) != 0) {
+    while (i < LOG_NOT_FOUND && strcmp(level, jump_debug_to_string[i]) != 0)
         i <<= 1;
-    }
 
-    if (i == LOG_NOT_FOUND) {
+    if (i == LOG_NOT_FOUND)
         LOG("debug: unidentified debug level", LOG_ERROR, log_level);
-    }
 
     return i;
 }
@@ -96,11 +91,10 @@ int process_debug(struct command *command, struct regmap *regmap, struct mfrc522
     enum DEBUG_OPE set = set_log(command->args[0], mfrc522_driver_dev->log_level);
     if (set == DEBUG_UNKOWN)
         return -1;
-    else if (set == DEBUG_STATUS) {
+    else if (set == DEBUG_STATUS)
         // TODO
         // print_currently_enabled_logs();
         return 0;
-    }
     if (command->nb_arg == 1) {
         if (set) {
             mfrc522_driver_dev->log_level = ENABLE_ALL_LOGS;
@@ -116,16 +110,13 @@ int process_debug(struct command *command, struct regmap *regmap, struct mfrc522
     while (i < command->nb_arg) {
         enum LOG_LEVEL log_level = find_log_level(*(command->args + i), mfrc522_driver_dev->log_level);
 
-        if (log_level == LOG_NOT_FOUND) {
+        if (log_level == LOG_NOT_FOUND)
             return -1;
-        }
 
-        if (set == DEBUG_ON) {
+        if (set == DEBUG_ON)
             current_level |= log_level;
-        }
-        else { // set == DEBUG_OFF
+        else
             current_level &= ~log_level;
-        }
         i++;
     }
 
