@@ -14,7 +14,6 @@ struct command *parse_write(const char* buffer, int log_level) {
 
     if (count_separator_occurence(buffer, ':') != WRITE_NB_ARG)
     {
-        // TODO: pass log level in args
         LOG("write: too many or not enough arguments given, expected 2", LOG_ERROR, log_level);
         return NULL;
     }

@@ -7,7 +7,7 @@
 /**
  * @param type: the type of the command
  * @param nb_args: the args the command takes
- * @return an allocated struct with every allocated
+ * @return an allocated struct with every field correctly allocated
  */
 struct command *command_init(enum COMMAND_TYPE type, int nb_args) {
     struct command *command = kmalloc(sizeof(struct command), GFP_KERNEL);
@@ -32,7 +32,7 @@ void command_free(struct command *command) {
     kfree(command);
 }
 
-// ##### PARSING #####
+// ############################ PARSING #################################
 
 static const char* map_command[] = {
 [COMMAND_WRITE] = "mem_write",
@@ -48,6 +48,12 @@ static const map_parse_command jump_parse[] = {
 [COMMAND_DEBUG] = parse_debug,
 };
 
+/**
+ * @param buffer: the command to parse
+ * @param log_level: current log enable
+ * @return a struct command corresponding to the parsed command. Caution,
+ * only sanity checks are done.
+ */
 struct command *parse_command(const char *buffer, int log_level){
     pr_info("Parsing command: %s\n", buffer);
     enum COMMAND_TYPE command_type = 0;
@@ -65,7 +71,7 @@ struct command *parse_command(const char *buffer, int log_level){
     return jump_parse[command_type](buffer, log_level);
 }
 
-// ##### PROCESSING #####
+// ############################ PROCESSING #################################
 
 typedef int (*map_process_command)(struct command *command, struct regmap *regmap, struct mfrc522_driver_dev *mfrc522_driver_dev);
 
