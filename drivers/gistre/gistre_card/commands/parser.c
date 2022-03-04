@@ -27,6 +27,7 @@ static int count_separator_occurence(const char *buffer, const char separator) {
     while (*(buffer + i) != '\0') {
         if (*(buffer + i) == separator)
             count++;
+        i++;
     }
     return count;
 }

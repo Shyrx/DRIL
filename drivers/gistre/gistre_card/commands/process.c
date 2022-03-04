@@ -14,12 +14,23 @@ static const char* map_command[] = {
 };
 
 static const char* jump_debug_to_string[] = {
-[DEBUG_OFF] = "off",
-[DEBUG_INFO] = "on",
-[DEBUG_WARN] = "warn",
-[DEBUG_EXTRA] = "extra",
-[DEBUG_ERROR] = "error"
+[LOG_INFO] = "info",
+[LOG_TRACE] = "trace",
+[LOG_WARN] = "warn",
+[LOG_EXTRA] = "extra",
+[LOG_ERROR] = "error"
 };
+
+const char *enum_log_to_string_message(int log_level) {
+    switch(log_level) {
+        case LOG_INFO: return "[INFO] ";
+        case LOG_TRACE: return "[TRACE] ";
+        case LOG_WARN: return "[WARNING] ";
+        case LOG_EXTRA: return "[DEBUG] ";
+        case LOG_ERROR: return "[ERROR] ";
+        default: return "";
+    }
+}
 
 typedef ssize_t (*map_process_command)(struct command *command, struct regmap *regmap, struct mfrc_dev *mfrc_dev);
 
@@ -28,6 +39,7 @@ typedef ssize_t (*map_process_command)(struct command *command, struct regmap *r
  * @param log_level: the current log_level (currently unused).
  * @return a positive integer if the arguments are valid.
  */
+// TODO rename func/ change behavior
 static int check_arg_size(struct command *command, int log_level)
 {
     long data_size;
@@ -47,47 +59,46 @@ of the device.
  */
 static ssize_t process_write(struct command *command, struct regmap *regmap, struct mfrc_dev *mfrc_dev)
 {
-    PRINT_DEBUG("write: trying to write on card", DEBUG_EXTRA, mfrc_dev->debug_level);
+    LOG("write: trying to write on card", LOG_EXTRA, mfrc_dev->debug_level);
     int data_size;
     if ((data_size = check_arg_size(command, mfrc_dev->debug_level)) < 0) {
-        PRINT_DEBUG("write: check on argument failed", DEBUG_ERROR, mfrc_dev->debug_level)
+        LOG("write: check on arguments failed", LOG_ERROR, mfrc_dev->debug_level)
         return -1;
     }
     if (data_size > INTERNAL_BUFFER_SIZE) {
-        PRINT_DEBUG("write: data too large, truncating", DEBUG_INFO, mfrc_dev->debug_level);
+        LOG("write: data too large, truncating", LOG_EXTRA, mfrc_dev->debug_level);
         data_size = INTERNAL_BUFFER_SIZE;
     }
 
     // to flush all the data
-    unsigned int i = 0;
-    int rc = 0;
-    if ((rc = regmap_write(regmap, MFRC522_FIFOLEVELREG, &i)))
+    if (regmap_write(regmap, MFRC522_FIFOLEVELREG, 0))
     {
-        PRINT_DEBUG("write: couldn't flush card, aborting", DEBUG_ERROR, mfrc_dev->debug_level);
+        LOG("write: couldn't flush card, aborting", LOG_ERROR, mfrc_dev->debug_level);
         return -1;
     }
+
+    unsigned int i = 0;
     while (i < data_size) {
         int err = regmap_write(regmap, MFRC522_FIFODATAREG, *(*(command->args + 1) + i));
         if (err)
         {
-            PRINT_DEBUG("write: failed to write on card, aborting", DEBUG_ERROR, mfrc_dev->debug_level);
-            pr_err("Write: Failed to write value to card\n");
+            LOG("write: failed to write on card, aborting", LOG_ERROR, mfrc_dev->debug_level);
             return -1;
         }
         i++;
     }
-    PRINT_DEBUG("write: finished to write mandatory content", DEBUG_EXTRA, mfrc_dev->debug_level);
+    LOG("write: finished to write user content", LOG_EXTRA, mfrc_dev->debug_level);
 
     while (i < INTERNAL_BUFFER_SIZE) {
         int err = regmap_write(regmap, MFRC522_FIFODATAREG, 0);
         if (err)
         {
-            PRINT_DEBUG("write: failed to fill FIFO", DEBUG_ERROR, mfrc_dev->debug_level)
+            LOG("write: failed to fill FIFO with zeroes", LOG_ERROR, mfrc_dev->debug_level)
             return -1;
         }
         i++;
     }
-    PRINT_DEBUG("write: operation successful", DEBUG_INFO, mfrc_dev->debug_level);
+    LOG("write: operation successful", LOG_EXTRA, mfrc_dev->debug_level);
     return INTERNAL_BUFFER_SIZE;
 }
 
@@ -100,17 +111,17 @@ of the device.
  */
 static ssize_t process_read(struct command *command, struct regmap *regmap, struct mfrc_dev *mfrc_dev)
 {
-    PRINT_DEBUG("read: trying to read from card...", DEBUG_EXTRA, mfrc_dev->debug_level)
+    LOG("read: trying to read from card...", LOG_EXTRA, mfrc_dev->debug_level)
     memset(mfrc_dev->data, 0, INTERNAL_BUFFER_SIZE + 1);
     unsigned int fifo_size = 0;
     if (regmap_read(regmap, MFRC522_FIFOLEVELREG, &fifo_size))
     {
-        PRINT_DEBUG("read: Failed to check fifo_size", DEBUG_ERROR, mfrc_dev->debug_level)
+        LOG("read: Failed to check fifo_size", LOG_ERROR, mfrc_dev->debug_level)
         return -1;
     }
     if (fifo_size == 0)
     {
-        PRINT_DEBUG("read: no data to read from card", DEBUG_ERROR, mfrc_dev->debug_level)
+        LOG("read: no data to read from card", LOG_WARN, mfrc_dev->debug_level)
         return INTERNAL_BUFFER_SIZE;
     }
     int i = 0;
@@ -119,22 +130,51 @@ static ssize_t process_read(struct command *command, struct regmap *regmap, stru
         int err = regmap_read(regmap, MFRC522_FIFODATAREG, mfrc_dev->data + i);
         if (err)
         {
-            PRINT_DEBUG("read: failed to read value from card", DEBUG_ERROR, mfrc_dev->debug_level)
+            LOG("read: failed to read value from card", LOG_ERROR, mfrc_dev->debug_level)
             return -1;
         }
         if (mfrc_dev->data + i == 0)
-            break; // TODO: add log
+        {
+            LOG("read: null byte received", LOG_WARN, mfrc_dev->debug_level);
+            break;
+        }
         i++;
     }
-    PRINT_DEBUG("read: operation successful", DEBUG_EXTRA, mfrc_dev->debug_level);
+    LOG("read: operation successful", LOG_EXTRA, mfrc_dev->debug_level);
     mfrc_dev->contains_data = true;
     return INTERNAL_BUFFER_SIZE;
 }
 
-// refacto so that the user can decide to toggle specific mode
-// something like debug:off:warn or debug:on:extra
-// by default, having debug:on should enable all warnings and
-// having debug:off should disable them all
+static int set_log(char *buffer, int log_level) {
+    if (strcmp(buffer, "on") == 0)
+    {
+        LOG("debug: enabling log levels...", LOG_EXTRA, log_level);
+        return 1;
+    }
+    if (strcmp(buffer, "off") == 0)
+    {
+        LOG("debug: disabling log levels...", LOG_EXTRA, log_level);
+        return 0;
+    }
+    LOG("debug: first argument should be 'on' or 'off', was something else", LOG_ERROR, log_level);
+    return -1;
+}
+
+static enum LOG_LEVEL find_log_level(char *level, int log_level)
+{
+    int i = 1;
+    // TODO ugly, should be changed
+    while (i < LOG_NOT_FOUND && strcmp(level, jump_debug_to_string[i]) != 0) {
+        i *= 2;
+    }
+
+    if (i == LOG_NOT_FOUND) {
+        LOG("debug: unidentified debug level", LOG_ERROR, log_level);
+    }
+
+    return i;
+}
+
 /**
  * @param command: the struct command containing what is needed to perform a `debug` call, need not to be checked beforehand.
  * @param regmap: a struct containing the API used to communicate with the card.
@@ -142,26 +182,29 @@ static ssize_t process_read(struct command *command, struct regmap *regmap, stru
 of the device.
  * @return a negative integer if an error occured, zero otherwise.
  */
-static ssize_t process_debug(struct command *command, struct regmap *regmap, struct mfrc_dev *mfrc_dev) {
-    // regmap is useless here
-    int i = 0;
+static ssize_t process_debug(struct command *command, struct regmap *regmap /* unused */, struct mfrc_dev *mfrc_dev) {
     int current_level = mfrc_dev->debug_level;
+    int set = set_log(command->args[0], mfrc_dev->debug_level);
+    if (set == -1)
+        return -1;
+
+    int i = 1;
     while (i < command->nb_arg) {
-        enum DEBUG_LEVEL debug_level = find_debug_level(*(command->args + i));
-        if (debug_level == DEBUG_NOT_FOUND) {
-            // TODO: add log
-            PRINT_DEBUG("debug: level not found", DEBUG_WARN, mfrc_dev->debug_level)
+        enum LOG_LEVEL log_level = find_log_level(*(command->args + i), mfrc_dev->debug_level);
+
+        if (log_level == LOG_NOT_FOUND) {
             return -1;
         }
 
-        if (debug_level == DEBUG_OFF) {
-            PRINT_DEBUG("debug: disabling debug_mode", DEBUG_WARN, mfrc_dev->debug_level)
-            mfrc_dev->debug_level = DEBUG_OFF;
-            return 0;
+        if (set) {
+            current_level |= log_level;
         }
-        current_level |= (debug_level ) ;
+        else {
+            current_level &= ~log_level;
+        }
     }
-    PRINT_DEBUG("debug: mode updated successfully", DEBUG_EXTRA, mfrc_dev->debug_level);
+
+    LOG("debug: log mode updated successfully", LOG_EXTRA, mfrc_dev->debug_level);
     mfrc_dev->debug_level = current_level;
     return 0;
 }
@@ -182,4 +225,3 @@ ssize_t process_command(struct command *command, struct mfrc_dev *mfrc_dev)
     // no need to check, would not reach this point if the command was unknown
     return jump_process[command->command_type](command, find_regmap(), mfrc_dev);
 }
-
