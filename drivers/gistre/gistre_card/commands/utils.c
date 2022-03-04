@@ -64,19 +64,20 @@ struct command *get_args(struct command *command, const char *buffer, int nb_arg
 	 return command;
 }
 
-void dump_trace(const unsigned int *data, bool reading, int log_level) {
-    if (!(log_level & LOG_TRACE))
-        return;
-    LOG("Dumping trace:", LOG_TRACE, log_level);
-    pr_info("<%s>\n", reading ? "RD" : "WR");
-    int i = 0;
+void dump_trace(const unsigned int *data, bool reading, int log_level)
+{
+	 if (!(log_level & LOG_TRACE))
+		  return;
+	 LOG("Dumping trace:", LOG_TRACE, log_level);
+	 pr_info("<%s>\n", reading ? "RD" : "WR");
+	 int i = 0;
 
-    while (i < 5) {
-        int j = 0;
-        while (j < 5) {
-            pr_info("(j = %d, c = %02x-%02X)%s", j, data[i * 5 + j], data[i * 5 + j], (j < 4 ? " " : "\n"));
-            j++;
-        }
-        i++;
-    }
+	 while (i < 5) {
+		  int j = 0;
+		  while (j < 5) {
+				pr_info("(j = %d, c = %02x-%02X)%s", j, data[i * 5 + j], data[i * 5 + j], (j < 4 ? " " : "\n"));
+				j++;
+		  }
+		  i++;
+	 }
 }
