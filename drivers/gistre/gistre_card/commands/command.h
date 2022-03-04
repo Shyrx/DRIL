@@ -4,7 +4,8 @@
 #include <linux/kernel.h>
 #include <linux/module.h>
 
-#include "../mfrc.h"
+#include "../mfrc522_driver.h"
+#include "../../mfrc522.h"
 
 struct mfrc_dev;
 
@@ -40,8 +41,17 @@ struct command {
 
 
 struct command *parse_command(const char *buf);
-ssize_t process_command(struct command *command, struct mfrc_dev *mfrc_dev);
+ssize_t process_command(struct command *command, struct mfrc522_driver_dev *mfrc522_driver_dev);
+
 struct command *command_init(enum COMMAND_TYPE type, int nb_args);
 void command_free(struct command *command);
+
+struct command *parse_write(const char* buffer);
+struct command *parse_read(const char* buffer);
+struct command *parse_debug(const char* buffer);
+
+ssize_t process_write(struct command *command, struct regmap *regmap, struct mfrc_dev *mfrc_dev);
+ssize_t process_read(struct command *command, struct regmap *regmap, struct mfrc_dev *mfrc_dev);
+ssize_t process_debug(struct command *command, struct regmap *regmap, struct mfrc_dev *mfrc_dev);
 
 #endif
