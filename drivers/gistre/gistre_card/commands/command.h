@@ -31,7 +31,7 @@ const char *enum_log_to_string_message(int log_level);
 #define LOG(message, level_required, log_level)	\
 	do { \
 		if (log_level & level_required) { \
-			pr_info("%s%s\n", \
+		    printk(KERN_CONT "%s%s\n", \
 					enum_log_to_string_message(level_required), \
 					message); \
 		} \

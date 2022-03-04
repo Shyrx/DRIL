@@ -69,15 +69,16 @@ void dump_trace(const unsigned int *data, bool reading, int log_level)
 	 if (!(log_level & LOG_TRACE))
 		  return;
 	 LOG("Dumping trace:", LOG_TRACE, log_level);
-	 pr_info("<%s>\n", reading ? "RD" : "WR");
+	 printk(KERN_CONT "<%s>\n", reading ? "RD" : "WR");
 	 int i = 0;
 
 	 while (i < 5) {
 		  int j = 0;
 		  while (j < 5) {
-				pr_info("%02x%s", data[i * 5 + j], (j < 4 ? " " : "\n"));
-				j++;
+		    printk(KERN_CONT "%02x%s", data[i * 5 + j], (j < 4 ? " " : "\n"));
+		    j++;
 		  }
+		  printk(KERN_CONT "\n");
 		  i++;
 	 }
 }
