@@ -169,6 +169,9 @@ static int mfrc_init(void) {
 		pr_debug("Allocated struct mfrc_dev\n");
 	}
 
+    // Enable error logs by default
+    mfrc_dev->log_level = LOG_ERROR;
+
 	/* Register char device */
 	mfrc_dev->cdev.owner = THIS_MODULE;
 	cdev_init(&mfrc_dev->cdev, &mfrc_fops);

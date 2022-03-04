@@ -32,3 +32,14 @@ https://elinux.org/Debugging_by_printing
 
 CONFIG_DEBUG_INFO=Y
 CONFIG_FRAME_POINTER=Y
+
+# TODO LIST
+- [ ] Write README
+- [ ] Clean code
+- [ ] Apply checkpath
+- [ ] Proper log everywhere
+- [ ] Documents all functions
+- [ ] Add debug:status
+- [ ] Add color on debug if possible
+- [ ] Implement random command
+- [ ] Tests by hand read/write more

@@ -18,6 +18,7 @@ MODULE_LICENSE("GPL v2");
 struct mfrc_dev {
 	struct cdev cdev;
     bool contains_data;
+    unsigned int log_level;
     unsigned int data[INTERNAL_BUFFER_SIZE + 1]; // + 1 to be null terminated
 };
 

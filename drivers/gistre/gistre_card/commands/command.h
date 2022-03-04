@@ -11,8 +11,26 @@ struct mfrc_dev;
 enum COMMAND_TYPE {
     COMMAND_READ = 0,
     COMMAND_WRITE,
+    COMMAND_DEBUG,
     COMMAND_NOT_FOUND,
 };
+
+enum LOG_LEVEL {
+LOG_INFO = 1,
+LOG_TRACE = 2,
+LOG_WARN = 4,
+LOG_EXTRA = 8,
+LOG_ERROR = 16,
+LOG_NOT_FOUND = 32,
+};
+
+const char *enum_log_to_string_message(int log_level);
+
+// TODO: check if it respects the coding style
+#define LOG(message, level_required, log_level)                 \
+    if (log_level & level_required) {                                   \
+        pr_info("%s%s\n", enum_log_to_string_message(level_required), message); \
+    }
 
 struct command {
     enum COMMAND_TYPE command_type;
