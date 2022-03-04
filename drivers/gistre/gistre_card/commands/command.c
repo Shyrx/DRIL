@@ -10,9 +10,11 @@
  * @param nb_args: the args the command takes
  * @return an allocated struct with every allocated
  */
-struct command *command_init(enum COMMAND_TYPE type, int nb_args) {
+struct command *command_init(enum COMMAND_TYPE type, int nb_args) 
+{
     struct command *command = kmalloc(sizeof(struct command), GFP_KERNEL);
-    command->args = kmalloc(sizeof(char *) * nb_args, GFP_KERNEL);
+
+    command->args = kmalloc_array(nb_args, sizeof(char *), GFP_KERNEL);
     command->nb_arg = nb_args;
     command->command_type = type;
     return command;
@@ -23,18 +25,20 @@ struct command *command_init(enum COMMAND_TYPE type, int nb_args) {
  * @param nb_args: the args the command takes
  * @return an allocated struct with every allocated
  */
-void command_free(struct command *command) {
+void command_free(struct command *command) 
+{
     int i = 0;
+
     while (i < command->nb_arg) {
-        kfree(*(command->args + i));
-        i++;
+	kfree(*(command->args + i));
+	i++;
     }
     kfree(command->args);
     kfree(command);
 }
 
 // TODO Move to debug
-static const char* jump_debug_to_string[] = {
+static const char *jump_debug_to_string[] = {
 [LOG_INFO] = "info",
 [LOG_TRACE] = "trace",
 [LOG_WARN] = "warn",
@@ -42,21 +46,22 @@ static const char* jump_debug_to_string[] = {
 [LOG_ERROR] = "error"
 };
 
-const char *enum_log_to_string_message(int log_level) {
-    switch(log_level) {
-        case LOG_INFO: return "[INFO] ";
-        case LOG_TRACE: return "[TRACE] ";
-        case LOG_WARN: return "[WARNING] ";
-        case LOG_EXTRA: return "[DEBUG] ";
-        case LOG_ERROR: return "[ERROR] ";
-        default: return "";
+const char *enum_log_to_string_message(int log_level) 
+{
+    switch (log_level) {
+	case LOG_INFO: return "[INFO] ";
+	case LOG_TRACE: return "[TRACE] ";
+	case LOG_WARN: return "[WARNING] ";
+	case LOG_EXTRA: return "[DEBUG] ";
+	case LOG_ERROR: return "[ERROR] ";
+	default: return "";
     }
 }
 
 
 // ##### PARSING #####
 
-static const char* map_command[] = {
+static const char *map_command[] = {
 [COMMAND_WRITE] = "mem_write",
 [COMMAND_READ] = "mem_read",
 [COMMAND_DEBUG] = "debug"
@@ -70,18 +75,19 @@ static const map_parse_command jump_parse[] = {
 [COMMAND_DEBUG] = parse_debug,
 };
 
-struct command *parse_command(const char *buffer){
+struct command *parse_command(const char *buffer)
+{
     pr_info("Parsing command: %s\n", buffer);
     enum COMMAND_TYPE command_type = 0;
     // kind of ugly, move into dedicated function ?
     while (command_type != COMMAND_NOT_FOUND
-           && strncmp(buffer, map_command[command_type], strlen(map_command[command_type])) != 0) {
-        command_type++;
+	   && strncmp(buffer, map_command[command_type], strlen(map_command[command_type])) != 0) {
+	command_type++;
     }
 
     if (command_type == COMMAND_NOT_FOUND) {
-        pr_err("command not found: '%s'\n", buffer);
-        return NULL;
+	pr_err("command not found: '%s'\n", buffer);
+	return NULL;
     }
     pr_info("Command found: %s\n", map_command[command_type]);
     return jump_parse[command_type](buffer);

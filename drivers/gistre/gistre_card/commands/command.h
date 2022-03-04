@@ -30,7 +30,7 @@ const char *enum_log_to_string_message(int log_level);
 // TODO: check if it respects the coding style
 #define LOG(message, level_required, log_level)                 \
     if (log_level & level_required) {                                   \
-        pr_info("%s%s\n", enum_log_to_string_message(level_required), message); \
+	pr_info("%s%s\n", enum_log_to_string_message(level_required), message); \
     }
 
 struct command {
@@ -46,9 +46,9 @@ ssize_t process_command(struct command *command, struct mfrc522_driver_dev *mfrc
 struct command *command_init(enum COMMAND_TYPE type, int nb_args);
 void command_free(struct command *command);
 
-struct command *parse_write(const char* buffer);
-struct command *parse_read(const char* buffer);
-struct command *parse_debug(const char* buffer);
+struct command *parse_write(const char *buffer);
+struct command *parse_read(const char *buffer);
+struct command *parse_debug(const char *buffer);
 
 ssize_t process_write(struct command *command, struct regmap *regmap, struct mfrc_dev *mfrc_dev);
 ssize_t process_read(struct command *command, struct regmap *regmap, struct mfrc_dev *mfrc_dev);
