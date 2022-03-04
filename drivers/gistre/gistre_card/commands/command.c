@@ -40,7 +40,7 @@ static const char* map_command[] = {
 [COMMAND_DEBUG] = "debug"
 };
 
-typedef struct command* (*map_parse_command)(const char *buffer);
+typedef struct command* (*map_parse_command)(const char *buffer, int log_level);
 
 static const map_parse_command jump_parse[] = {
 [COMMAND_WRITE] = parse_write,
@@ -48,7 +48,7 @@ static const map_parse_command jump_parse[] = {
 [COMMAND_DEBUG] = parse_debug,
 };
 
-struct command *parse_command(const char *buffer){
+struct command *parse_command(const char *buffer, int log_level){
     pr_info("Parsing command: %s\n", buffer);
     enum COMMAND_TYPE command_type = 0;
     // kind of ugly, move into dedicated function ?
@@ -62,7 +62,7 @@ struct command *parse_command(const char *buffer){
         return NULL;
     }
     pr_info("Command found: %s\n", map_command[command_type]);
-    return jump_parse[command_type](buffer);
+    return jump_parse[command_type](buffer, log_level);
 }
 
 // ##### PROCESSING #####

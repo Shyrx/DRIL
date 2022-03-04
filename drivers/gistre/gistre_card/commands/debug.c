@@ -28,30 +28,14 @@ const char *enum_log_to_string_message(int log_level) {
  * @param buffer: the buffer containing the data to process
  * @return an allocated struct of kind COMMAND_DEBUG
  */
-struct command *parse_debug(const char* buffer) {
-    int nb_args = count_separator_occurence(buffer, ':'); // missing -1 ?
-    pr_info("debug: nb args = %d\n", nb_args);
-    struct command *command = command_init(COMMAND_DEBUG, nb_args);
-    char *new_buff = astrcpy(buffer);
-    char *tok = NULL;
-    char *sep = ":";
-    new_buff += strlen(DEBUG_NAME) + 1;
-    int i = 0;
-    while ((tok = strsep(&new_buff, sep)) != NULL && i < nb_args) {
-      *(command->args + i++) = astrcpy(tok);
-      pr_info("arg %d: %s\n", i, tok);
-    }
-    kfree(new_buff);
-
-    // in case there are too many arguments
-    if (tok != NULL)
-    {
-        pr_info("debug: too many args\n");
-        kfree(tok); // TODO: strsep free tok ?
-        command_free(command);
+struct command *parse_debug(const char* buffer, int log_level) {
+    int nb_args = count_separator_occurence(buffer, ':');
+    if (nb_args == 0) {
+        LOG("debug: expected at least one argument, but none were given", LOG_ERROR, log_level);
         return NULL;
     }
-    return command;
+    struct command *command = command_init(COMMAND_DEBUG, nb_args);
+    return get_args(command, buffer, nb_args, DEBUG_NAME);
 }
 
 static int set_log(char *buffer, int log_level) {

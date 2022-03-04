@@ -8,8 +8,12 @@
  * @param buffer: the buffer containing the data to process
  * @return an allocated struct of kind COMMAND_READ
  */
-struct command *parse_read(const char *buffer) {
-    // TODO: check arg number
+struct command *parse_read(const char *buffer, int log_level) {
+    int nb_args = count_separator_occurence(buffer, ':');
+    if (nb_args != 0) {
+        LOG("read: expected no arguments, but some were given", LOG_ERROR, log_level);
+        return NULL;
+    }
     struct command *command = command_init(COMMAND_READ, 0);
     return command;
 }
@@ -23,8 +27,8 @@ of the device.
  */
 int process_read(struct command *command, struct regmap *regmap, struct mfrc522_driver_dev *mfrc522_driver_dev)
 {
-    // TODO Check number arg
-    LOG("read: trying to read from card...", LOG_EXTRA, mfrc522_driver_dev->log_level)
+    LOG("read: trying to read from card...", LOG_EXTRA, mfrc522_driver_dev->log_level);
+    mfrc522_driver_dev->contains_data = false;
     memset(mfrc522_driver_dev->data, 0, INTERNAL_BUFFER_SIZE + 1);
     unsigned int fifo_size = 0;
     if (regmap_read(regmap, MFRC522_FIFOLEVELREG, &fifo_size))
@@ -37,7 +41,7 @@ int process_read(struct command *command, struct regmap *regmap, struct mfrc522_
         LOG("read: no data to read from card", LOG_WARN, mfrc522_driver_dev->log_level)
         return INTERNAL_BUFFER_SIZE;
     }
-    pr_info("Read: Card buffer size is %d\n", fifo_size);
+    pr_info("read: Card buffer size is %d\n", fifo_size);
     int i = 0;
     while (i < fifo_size)
     {

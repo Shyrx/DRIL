@@ -10,28 +10,16 @@
  * @param buffer: the buffer containing the data to process
  * @return an allocated struct of kind COMMAND_WRITE
  */
-struct command *parse_write(const char* buffer) {
-    // TODO Check nb of args
-    struct command *command = command_init(COMMAND_WRITE, WRITE_NB_ARG);
-    char *new_buff = astrcpy(buffer);
-    char *tok = NULL;
-    char *sep = ":";
-    new_buff += strlen(WRITE_NAME) + 1;
-    int i = 0;
-    while ((tok = strsep(&new_buff, sep)) != NULL && i < WRITE_NB_ARG) {
-      *(command->args + i++) = astrcpy(tok);
-      pr_info("arg %d: %s\n", i, tok);
-    }
-    kfree(new_buff);
+struct command *parse_write(const char* buffer, int log_level) {
 
-    // In case there are too many arguments
-    if (tok != NULL)
+    if (count_separator_occurence(buffer, ':') != WRITE_NB_ARG)
     {
-        kfree(tok);
-        command_free(command);
+        // TODO: pass log level in args
+        LOG("write: too many or not enough arguments given, expected 2", LOG_ERROR, log_level);
         return NULL;
     }
-    return command;
+    struct command *command = command_init(COMMAND_WRITE, WRITE_NB_ARG);
+    return get_args(command, buffer, WRITE_NB_ARG, WRITE_NAME);
 }
 
 /**
