@@ -9,7 +9,7 @@
  * @param nb_args: the args the command takes
  * @return an allocated struct with every allocated
  */
-struct command *command_init(enum COMMAND_TYPE type, int nb_args) 
+struct command *command_init(enum COMMAND_TYPE type, int nb_args)
 {
 	struct command *command = kmalloc(sizeof(struct command), GFP_KERNEL);
 
@@ -24,7 +24,7 @@ struct command *command_init(enum COMMAND_TYPE type, int nb_args)
  * @param nb_args: the args the command takes
  * @return an allocated struct with every allocated
  */
-void command_free(struct command *command) 
+void command_free(struct command *command)
 {
 	int i = 0;
 
@@ -38,7 +38,7 @@ void command_free(struct command *command)
 
 // ##### PARSING #####
 
-static const char *map_command[] = {
+static const char * const map_command[] = {
 [COMMAND_WRITE] = "mem_write",
 [COMMAND_READ] = "mem_read",
 [COMMAND_DEBUG] = "debug"
@@ -52,12 +52,14 @@ static const map_parse_command jump_parse[] = {
 [COMMAND_DEBUG] = parse_debug,
 };
 
-struct command *parse_command(const char *buffer, int log_level){
+struct command *parse_command(const char *buffer, int log_level)
+{
 	pr_info("Parsing command: %s\n", buffer);
 	enum COMMAND_TYPE command_type = 0;
 	// kind of ugly, move into dedicated function ?
 	while (command_type != COMMAND_NOT_FOUND
-		   && strncmp(buffer, map_command[command_type], strlen(map_command[command_type])) != 0) {
+		   && strncmp(buffer, map_command[command_type],
+                      strlen(map_command[command_type])) != 0) {
 		command_type++;
 	}
 
@@ -71,7 +73,9 @@ struct command *parse_command(const char *buffer, int log_level){
 
 // ##### PROCESSING #####
 
-typedef int (*map_process_command)(struct command *command, struct regmap *regmap, struct mfrc522_driver_dev *mfrc522_driver_dev);
+typedef int (*map_process_command)
+(struct command *command, struct regmap *regmap,
+ struct mfrc522_driver_dev *mfrc522_driver_dev);
 
 static const map_process_command jump_process[] = {
 [COMMAND_WRITE] = process_write,
@@ -84,9 +88,11 @@ static struct regmap *find_regmap(void)
 	return mfrc522_get_regmap(dev_to_mfrc522(mfrc522_find_dev()));
 }
 
-int process_command(struct command *command, struct mfrc522_driver_dev *mfrc522_driver_dev)
+int process_command(struct command *command,
+                    struct mfrc522_driver_dev *mfrc522_driver_dev)
 {
 	// no need to check, would not reach this point if the command was unknown
-	return jump_process[command->command_type](command, find_regmap(), mfrc522_driver_dev);
+	return jump_process[command->command_type]
+        (command, find_regmap(), mfrc522_driver_dev);
 }
 

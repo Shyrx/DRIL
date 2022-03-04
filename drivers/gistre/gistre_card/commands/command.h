@@ -29,12 +29,12 @@ LOG_NOT_FOUND = 32,
 const char *enum_log_to_string_message(int log_level);
 
 #define LOG(message, level_required, log_level)	\
-	do {																\
-		if (log_level & level_required) {								\
-			pr_info("%s%s\n",											\
-					enum_log_to_string_message(level_required),			\
-					message);											\
-		}																\
+	do { \
+		if (log_level & level_required) { \
+			pr_info("%s%s\n", \
+					enum_log_to_string_message(level_required), \
+					message); \
+		} \
 	} while (0)
 
 struct command {
@@ -47,13 +47,17 @@ struct command *command_init(enum COMMAND_TYPE type, int nb_args);
 void command_free(struct command *command);
 
 struct command *parse_command(const char *buf, int log_level);
-struct command *parse_write(const char* buffer, int log_level);
-struct command *parse_read(const char* buffer, int log_level);
-struct command *parse_debug(const char* buffer, int log_level);
+struct command *parse_write(const char *buffer, int log_level);
+struct command *parse_read(const char *buffer, int log_level);
+struct command *parse_debug(const char *buffer, int log_level);
 
-int process_command(struct command *command, struct mfrc522_driver_dev *mfrc522_driver_dev);
-int process_write(struct command *command, struct regmap *regmap, struct mfrc522_driver_dev *mfrc522_driver_dev);
-int process_read(struct command *command, struct regmap *regmap, struct mfrc522_driver_dev *mfrc522_driver_dev);
-int process_debug(struct command *command, struct regmap *regmap, struct mfrc522_driver_dev *mfrc522_driver_dev);
+int process_command(struct command *command,
+					struct mfrc522_driver_dev *mfrc522_driver_dev);
+int process_write(struct command *command, struct regmap *regmap,
+				  struct mfrc522_driver_dev *mfrc522_driver_dev);
+int process_read(struct command *command, struct regmap *regmap,
+				 struct mfrc522_driver_dev *mfrc522_driver_dev);
+int process_debug(struct command *command, struct regmap *regmap,
+				  struct mfrc522_driver_dev *mfrc522_driver_dev);
 
 #endif

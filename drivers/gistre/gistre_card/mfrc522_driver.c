@@ -128,7 +128,8 @@ static void mfrc522_driver_exit(void)
 }
 
 __init
-static int mfrc522_driver_init(void) {
+static int mfrc522_driver_init(void)
+{
 	LOG("Hello, GISTRE card !", LOG_INFO, LOG_INFO);
 
 	dev_t dev;
@@ -137,16 +138,17 @@ static int mfrc522_driver_init(void) {
 
 	/* Allocate major */
 	ret = alloc_chrdev_region(&dev, 0, 1, devname);
-	if (ret < 0) {
+	if (ret < 0)
 		return 1;
-	}
+
 	major = MAJOR(dev);
 	pr_info("Got major %d\n", major);
 
 	/* Allocate our device structure */
 	mfrc522_driver_dev = kmalloc(sizeof(*mfrc522_driver_dev), GFP_KERNEL);
-	if (! mfrc522_driver_dev) {
-		LOG("init: failed to allocate struct mfrc522_driver_dev", LOG_ERROR, LOG_ERROR);
+	if (!mfrc522_driver_dev) {
+		LOG("init: failed to allocate struct mfrc522_driver_dev",
+			LOG_ERROR, LOG_ERROR);
 		return -ENOMEM;
 	}
 	LOG("init: allocated struct mfrc522_driver_dev", LOG_INFO, LOG_INFO);
@@ -162,7 +164,8 @@ static int mfrc522_driver_init(void) {
 
 	ret = cdev_add(&mfrc522_driver_dev->cdev, dev, 1);
 	if (ret < 0) {
-		LOG("init: failed to add device", LOG_ERROR, mfrc522_driver_dev->log_level);
+		LOG("init: failed to add device", LOG_ERROR,
+			mfrc522_driver_dev->log_level);
 		return -ENOMEM;
 	}
 	// TODO: add major in print
