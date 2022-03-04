@@ -16,7 +16,7 @@ struct mfrc522_driver_dev {
 	struct cdev cdev;
 	bool contains_data;
 	unsigned int log_level;
-	unsigned int data[INTERNAL_BUFFER_SIZE + 1]; // + 1 to be null terminated
+	unsigned int data[INTERNAL_BUFFER_SIZE + 1];
 };
 
 int mfrc522_driver_open(struct inode *inode, struct file *file);

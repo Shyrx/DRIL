@@ -9,7 +9,7 @@
 static int major;
 static struct mfrc522_driver_dev *mfrc522_driver_dev;
 
-int mfrc522_driver_open(struct inode *inode, struct file *file) 
+int mfrc522_driver_open(struct inode *inode, struct file *file)
 {
 	unsigned int i_major = imajor(inode);
 	unsigned int i_minor = iminor(inode);
@@ -34,6 +34,7 @@ int mfrc522_driver_release(struct inode *inode /* unused */,
 ssize_t mfrc522_driver_read(struct file *file, char __user *buf,
 	size_t len, loff_t *off /* unused */) {
 	struct mfrc522_driver_dev *dev;
+
 	dev = file->private_data;
 
 	// check if data exists
@@ -69,6 +70,7 @@ ssize_t mfrc522_driver_read(struct file *file, char __user *buf,
 ssize_t mfrc522_driver_write(struct file *file, const char __user *user_buf,
 	size_t len, loff_t *off /* unused */) {
 	struct mfrc522_driver_dev *dev;
+
 	dev = file->private_data;
 
 	char buff[MAX_ACCEPTED_COMMAND_SIZE + 1];
