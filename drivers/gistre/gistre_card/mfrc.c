@@ -51,35 +51,42 @@ ssize_t mfrc_read(struct file *file, char __user *buf,
 
     // check if data exists
     if (!dev->contains_data) {
-        pr_warn("No data in internal buffer\n");
+        pr_warn("\nNo data in internal buffer\n");
         return 0;
     }
 
+    char data[INTERNAL_BUFFER_SIZE + 1];
+    memset(data, 0, INTERNAL_BUFFER_SIZE + 1);
+    int i = 0;
+    while (i < INTERNAL_BUFFER_SIZE)
+    {
+        data[i] = dev->data[i];
+        i++;
+    }
+    pr_info("Read: dev data is '%s'\n", data);
+
     // flush internal buffer
-    if (copy_to_user(buf, dev->data, MAX_SIZE_BUFFER + 1)) {
+    if (copy_to_user(buf, data, INTERNAL_BUFFER_SIZE + 1)) {
         pr_err("Failed to copy data to user\n");
         return -EFAULT;
     }
 
     // reset data
-    memset(dev->data, 0, MAX_SIZE_BUFFER + 1);
+    memset(dev->data, 0, INTERNAL_BUFFER_SIZE + 1);
     dev->contains_data = false;
-    return MAX_SIZE_BUFFER;
+    return INTERNAL_BUFFER_SIZE;
 }
 
 ssize_t mfrc_write(struct file *file, const char __user *user_buf,
         size_t len, loff_t *off /* unused */) {
-    // TODO: communicate with internal buffer of card
 	struct mfrc_dev *dev;
     dev = file->private_data;
     
-    // TODO: fix size, only takes 25 characters,
-    //       including command_name + size
-    char buff[MAX_SIZE_BUFFER + 1];
+    char buff[MAX_ACCEPTED_COMMAND_SIZE + 1];
 
-    memset(buff, 0, MAX_SIZE_BUFFER + 1);
+    memset(buff, 0, MAX_ACCEPTED_COMMAND_SIZE + 1);
 
-    if (copy_from_user(buff, user_buf, MAX_SIZE_BUFFER)) {
+    if (copy_from_user(buff, user_buf, MAX_ACCEPTED_COMMAND_SIZE)) {
         pr_err("Failed to copy user");
         return -EFAULT;
     }
@@ -89,7 +96,14 @@ ssize_t mfrc_write(struct file *file, const char __user *user_buf,
         return -EFAULT;
     }
     
-	return process_command(command, dev);
+	if (process_command(command, dev) < 0) {
+        // TODO precise error here
+        pr_err("Error while processing command\n");
+        return -1;
+    }
+
+    pr_info("Write: dev data is '%s'\n", dev->data);
+    return len;
 }
 
 /*
