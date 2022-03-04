@@ -75,7 +75,7 @@ void dump_trace(const unsigned int *data, bool reading, int log_level)
 	 while (i < 5) {
 		  int j = 0;
 		  while (j < 5) {
-				pr_info("(j = %d, c = %02x-%02X)%s", j, data[i * 5 + j], data[i * 5 + j], (j < 4 ? " " : "\n"));
+				pr_info("%02x%s", data[i * 5 + j], (j < 4 ? " " : "\n"));
 				j++;
 		  }
 		  i++;
