@@ -47,11 +47,6 @@ int process_read(struct command *command, struct regmap *regmap, struct mfrc522_
             LOG("read: failed to read value from card", LOG_ERROR, mfrc522_driver_dev->log_level)
             return -1;
         }
-        if (*(mfrc522_driver_dev->data + i) == 0)
-        {
-            LOG("read: null byte received", LOG_WARN, mfrc522_driver_dev->log_level);
-            break;
-        }
         i++;
     }
     if (flush_fifo(regmap, mfrc522_driver_dev->log_level) < 0) {
