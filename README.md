@@ -34,12 +34,15 @@ CONFIG_DEBUG_INFO=Y
 CONFIG_FRAME_POINTER=Y
 
 # TODO LIST
-- [ ] Write README
-- [ ] Clean code
-- [ ] Apply checkpath
-- [ ] Proper log everywhere
-- [ ] Documents all functions
-- [ ] Add debug:status
-- [ ] Add color on debug if possible
-- [ ] Implement random command
-- [ ] Tests by hand read/write more
+
+- [x] Clean code
+- [x] Proper log everywhere
+- [x] Tests by hand read/write more
+
+- [1] Write README
+- [2] Apply checkpath
+- [3] Documents all functions
+- [4] Add debug:status
+- [5] Implement random command
+- [6] Add color on debug if possible
+

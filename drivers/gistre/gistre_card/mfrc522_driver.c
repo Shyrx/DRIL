@@ -106,7 +106,6 @@ static void mfrc522_driver_exit(void) {
 
 	/* Unregister char device */
 	cdev_del(&mfrc522_driver_dev->cdev);
-	pr_debug("Unregistered char device\n");
 
 	/* Free mfrc522_driver_dev structure */
 	kfree(mfrc522_driver_dev);
@@ -117,7 +116,7 @@ static void mfrc522_driver_exit(void) {
 	unregister_chrdev_region(dev, 1);
 	pr_debug("Released major %d\n", major);
 
-    pr_info("Stopping driver support for MFRC_522 card\n");
+    LOG("Stopping driver support for MFRC_522 card", LOG_INFO, LOG_INFO);
 }
 
 __init
