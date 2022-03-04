@@ -101,6 +101,7 @@ typedef struct command* (*map_parse_command)(const char *buffer);
 static const map_parse_command jump_parse[] = {
 [COMMAND_WRITE] = parse_write,
 [COMMAND_READ] = parse_read,
+[COMMAND_DEBUG] = parse_debug,
 };
 
 struct command *parse_command(const char *buffer){
