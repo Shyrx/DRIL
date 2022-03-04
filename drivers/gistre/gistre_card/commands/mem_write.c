@@ -10,10 +10,10 @@
  * @param buffer: the buffer containing the data to process
  * @return an allocated struct of kind COMMAND_WRITE
  */
-struct command *parse_write(const char* buffer, int log_level) {
+struct command *parse_write(const char *buffer, int log_level)
+{
 
-	if (count_separator_occurence(buffer, ':') != WRITE_NB_ARG)
-	{
+	if (count_separator_occurence(buffer, ':') != WRITE_NB_ARG) {
 		// TODO: pass log level in args
 		LOG("write: too many or not enough arguments given, expected 2", LOG_ERROR, log_level);
 		return NULL;
@@ -39,7 +39,7 @@ int process_write(struct command *command, struct regmap *regmap,
 		mfrc522_driver_dev->log_level);
 	int data_size;
 
-	if ((data_size =) < 0) {
+	if (data_size < 0) {
 		LOG("write: check on arguments failed", LOG_ERROR,
 			mfrc522_driver_dev->log_level)
 			return -1;
@@ -58,8 +58,7 @@ int process_write(struct command *command, struct regmap *regmap,
 	while (i < data_size) {
 		int err = regmap_write(regmap, MFRC522_FIFODATAREG,
 							   *(*(command->args + 1) + i));
-		if (err)
-		{
+		if (err) {
 			LOG("write: failed to write on card, abordting", LOG_ERROR,
 				mfrc522_driver_dev->log_level);
 				return -1;
@@ -71,8 +70,7 @@ int process_write(struct command *command, struct regmap *regmap,
 	while (i < INTERNAL_BUFFER_SIZE) {
 		int err = regmap_write(regmap, MFRC522_FIFODATAREG, 0);
 
-		if (err)
-		{
+		if (err) {
 			LOG("write: failed to fill FIFO with zeroes", LOG_ERROR,
 				mfrc522_driver_dev->log_level);
 				return -1;

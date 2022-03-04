@@ -75,7 +75,7 @@ struct command *parse_command(const char *buffer, int log_level)
 
 typedef int (*map_process_command)
 (struct command *command, struct regmap *regmap,
- struct mfrc522_driver_dev *mfrc522_driver_dev);
+struct mfrc522_driver_dev *mfrc522_driver_dev);
 
 static const map_process_command jump_process[] = {
 [COMMAND_WRITE] = process_write,
