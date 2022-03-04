@@ -53,20 +53,20 @@ static const map_parse_command jump_parse[] = {
 };
 
 struct command *parse_command(const char *buffer, int log_level){
-    pr_info("Parsing command: %s\n", buffer);
-    enum COMMAND_TYPE command_type = 0;
-    // kind of ugly, move into dedicated function ?
-    while (command_type != COMMAND_NOT_FOUND
-           && strncmp(buffer, map_command[command_type], strlen(map_command[command_type])) != 0) {
-        command_type++;
-    }
+	pr_info("Parsing command: %s\n", buffer);
+	enum COMMAND_TYPE command_type = 0;
+	// kind of ugly, move into dedicated function ?
+	while (command_type != COMMAND_NOT_FOUND
+		   && strncmp(buffer, map_command[command_type], strlen(map_command[command_type])) != 0) {
+		command_type++;
+	}
 
-    if (command_type == COMMAND_NOT_FOUND) {
-        pr_err("command not found: '%s'\n", buffer);
-        return NULL;
-    }
-    pr_info("Command found: %s\n", map_command[command_type]);
-    return jump_parse[command_type](buffer, log_level);
+	if (command_type == COMMAND_NOT_FOUND) {
+		pr_err("command not found: '%s'\n", buffer);
+		return NULL;
+	}
+	pr_info("Command found: %s\n", map_command[command_type]);
+	return jump_parse[command_type](buffer, log_level);
 }
 
 // ##### PROCESSING #####

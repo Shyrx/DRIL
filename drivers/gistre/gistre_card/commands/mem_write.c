@@ -12,14 +12,14 @@
  */
 struct command *parse_write(const char* buffer, int log_level) {
 
-    if (count_separator_occurence(buffer, ':') != WRITE_NB_ARG)
-    {
-        // TODO: pass log level in args
-        LOG("write: too many or not enough arguments given, expected 2", LOG_ERROR, log_level);
-        return NULL;
-    }
-    struct command *command = command_init(COMMAND_WRITE, WRITE_NB_ARG);
-    return get_args(command, buffer, WRITE_NB_ARG, WRITE_NAME);
+	if (count_separator_occurence(buffer, ':') != WRITE_NB_ARG)
+	{
+		// TODO: pass log level in args
+		LOG("write: too many or not enough arguments given, expected 2", LOG_ERROR, log_level);
+		return NULL;
+	}
+	struct command *command = command_init(COMMAND_WRITE, WRITE_NB_ARG);
+	return get_args(command, buffer, WRITE_NB_ARG, WRITE_NAME);
 }
 
 /**
@@ -55,9 +55,9 @@ int process_write(struct command *command, struct regmap *regmap, struct mfrc522
 	while (i < data_size) {
 	int err = regmap_write(regmap, MFRC522_FIFODATAREG, *(*(command->args + 1) + i));
 
-    if (flush_fifo(regmap, mfrc522_driver_dev->log_level) < 0) {
-        return -1;
-    }
+	if (flush_fifo(regmap, mfrc522_driver_dev->log_level) < 0) {
+		return -1;
+	}
 
 	while (i < INTERNAL_BUFFER_SIZE) {
 	int err = regmap_write(regmap, MFRC522_FIFODATAREG, 0);

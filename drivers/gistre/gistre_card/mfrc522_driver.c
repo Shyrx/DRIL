@@ -15,7 +15,7 @@ int mfrc522_driver_open(struct inode *inode, struct file *file)
 	unsigned int i_minor = iminor(inode);
 
 	if (i_major != major) {
-        LOG("open: invalid major, exiting", LOG_ERROR, LOG_ERROR);
+		LOG("open: invalid major, exiting", LOG_ERROR, LOG_ERROR);
 		return -EINVAL;
 	}
 
@@ -124,12 +124,12 @@ static void mfrc522_driver_exit(void)
 	unregister_chrdev_region(dev, 1);
 	pr_debug("Released major %d\n", major);
 
-    LOG("Stopping driver support for MFRC_522 card", LOG_INFO, LOG_INFO);
+	LOG("Stopping driver support for MFRC_522 card", LOG_INFO, LOG_INFO);
 }
 
 __init
 static int mfrc522_driver_init(void) {
-    LOG("Hello, GISTRE card !", LOG_INFO, LOG_INFO);
+	LOG("Hello, GISTRE card !", LOG_INFO, LOG_INFO);
 
 	dev_t dev;
 	int ret;
@@ -140,16 +140,16 @@ static int mfrc522_driver_init(void) {
 	if (ret < 0) {
 		return 1;
 	}
-    major = MAJOR(dev);
-    pr_info("Got major %d\n", major);
+	major = MAJOR(dev);
+	pr_info("Got major %d\n", major);
 
 	/* Allocate our device structure */
 	mfrc522_driver_dev = kmalloc(sizeof(*mfrc522_driver_dev), GFP_KERNEL);
 	if (! mfrc522_driver_dev) {
-        LOG("init: failed to allocate struct mfrc522_driver_dev", LOG_ERROR, LOG_ERROR);
+		LOG("init: failed to allocate struct mfrc522_driver_dev", LOG_ERROR, LOG_ERROR);
 		return -ENOMEM;
 	}
-    LOG("init: allocated struct mfrc522_driver_dev", LOG_INFO, LOG_INFO);
+	LOG("init: allocated struct mfrc522_driver_dev", LOG_INFO, LOG_INFO);
 
 	pr_debug("Allocated struct mfrc522_driver_dev\n");
 
@@ -162,11 +162,11 @@ static int mfrc522_driver_init(void) {
 
 	ret = cdev_add(&mfrc522_driver_dev->cdev, dev, 1);
 	if (ret < 0) {
-        LOG("init: failed to add device", LOG_ERROR, mfrc522_driver_dev->log_level);
+		LOG("init: failed to add device", LOG_ERROR, mfrc522_driver_dev->log_level);
 		return -ENOMEM;
 	}
-    // TODO: add major in print
-    LOG("init: device successfully initialized", LOG_INFO, LOG_INFO);
+	// TODO: add major in print
+	LOG("init: device successfully initialized", LOG_INFO, LOG_INFO);
 	return 0;
 }
 
