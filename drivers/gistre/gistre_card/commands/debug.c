@@ -15,7 +15,8 @@ static const char * const jump_debug_to_string[] = {
 [LOG_ERROR] = "error"
 };
 
-const char *enum_log_to_string_message(int log_level) {
+const char *enum_log_to_string_message(int log_level)
+{
 	switch (log_level) {
 	case LOG_INFO: return "[INFO] ";
 	case LOG_TRACE: return "[TRACE] ";
@@ -30,7 +31,8 @@ const char *enum_log_to_string_message(int log_level) {
  * @param buffer: the buffer containing the data to process
  * @return an allocated struct of kind COMMAND_DEBUG
  */
-struct command *parse_debug(const char *buffer, int log_level) {
+struct command *parse_debug(const char *buffer, int log_level)
+{
 	int nb_args = count_separator_occurence(buffer, ':');
 
 	if (nb_args == 0) {
@@ -39,6 +41,7 @@ struct command *parse_debug(const char *buffer, int log_level) {
 		return NULL;
 	}
 	struct command *command = command_init(COMMAND_DEBUG, nb_args);
+
 	return get_args(command, buffer, nb_args, DEBUG_NAME);
 }
 
@@ -63,13 +66,12 @@ static enum LOG_LEVEL find_log_level(char *level, int log_level)
 {
 	int i = 1;
 	// TODO ugly, should be changed
-	while (i < LOG_NOT_FOUND && strcmp(level, jump_debug_to_string[i]) != 0) {
+	while (i < LOG_NOT_FOUND
+		   && strcmp(level, jump_debug_to_string[i]) != 0)
 		i <<= 1;
-	}
 
-	if (i == LOG_NOT_FOUND) {
-	LOG("debug: unidentified debug level", LOG_ERROR, log_level);
-	}
+	if (i == LOG_NOT_FOUND)
+		LOG("debug: unidentified debug level", LOG_ERROR, log_level);
 
 	return i;
 }
@@ -100,8 +102,7 @@ int process_debug(struct command *command, struct regmap *regmap,
 			mfrc522_driver_dev->log_level = ENABLE_ALL_LOGS;
 			LOG("debug: enabling all logs",
 				LOG_INFO, mfrc522_driver_dev->log_level);
-		}
-		else {
+		} else {
 			LOG("debug: disabling all logs",
 				LOG_INFO, mfrc522_driver_dev->log_level);
 			mfrc522_driver_dev->log_level = 0;
@@ -112,8 +113,9 @@ int process_debug(struct command *command, struct regmap *regmap,
 	int i = 1;
 
 	while (i < command->nb_arg) {
-		enum LOG_LEVEL log_level =
-			find_log_level(*(command->args + i), mfrc522_driver_dev->log_level);
+		enum LOG_LEVEL log_level = find_log_level(
+			*(command->args + i),
+			mfrc522_driver_dev->log_level);
 
 		if (log_level == LOG_NOT_FOUND)
 			return -1;

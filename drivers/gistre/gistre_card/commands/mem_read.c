@@ -22,10 +22,12 @@ struct command *parse_read(const char *buffer, int log_level)
 }
 
 /**
- * @param type: the struct command containing what is needed to perform a `read` call, need not to be checked beforehand.
- * @param regmap: a struct containing the API used to communicate with the card.
- * @param mfrc522_driver_dev: a struct containing the data related to the current context
-of the device.
+ * @param type: the struct command containing what is needed to perform
+ * a `read` call, need not to be checked beforehand.
+ * @param regmap: a struct containing the API used to communicate with
+ * the card.
+ * @param mfrc522_driver_dev: a struct containing the data related to
+ * the current context of the device.
  * @return the number of byte read, or a negative number if an error occured.
  */
 int process_read(struct command *command, struct regmap *regmap,
@@ -63,9 +65,8 @@ int process_read(struct command *command, struct regmap *regmap,
 		i++;
 	}
 
-	if (flush_fifo(regmap, mfrc522_driver_dev->log_level) < 0) {
+	if (flush_fifo(regmap, mfrc522_driver_dev->log_level) < 0)
 		return -1;
-	}
 
 	LOG("read: operation successful", LOG_EXTRA,
 		mfrc522_driver_dev->log_level);

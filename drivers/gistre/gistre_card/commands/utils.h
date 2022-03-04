@@ -9,5 +9,5 @@ int check_arg_size(struct command *command, int log_level);
 int flush_fifo(struct regmap *regmap, int log_level);
 
 struct command *get_args(struct command *command, const char *buffer,
-                         int nb_args, const char *command_name);
+						 int nb_args, const char *command_name);
 #endif // UTILS_H
