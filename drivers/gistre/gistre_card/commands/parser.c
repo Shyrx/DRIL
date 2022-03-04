@@ -74,11 +74,12 @@ struct command *parse_read(const char*buffer) {
  */
 struct command *parse_debug(const char* buffer) {
     int nb_args = count_separator_occurence(buffer, ':'); // missing -1 ?
-    struct command *command = command_init(COMMAND_WRITE, nb_args);
+    pr_info("debug: nb args = %d\n", nb_args);
+    struct command *command = command_init(COMMAND_DEBUG, nb_args);
     char *new_buff = astrcpy(buffer);
     char *tok = NULL;
     char *sep = ":";
-    new_buff += strlen(map_command[COMMAND_WRITE]) + 1;
+    new_buff += strlen(map_command[COMMAND_DEBUG]) + 1;
     int i = 0;
     while ((tok = strsep(&new_buff, sep)) != NULL && i < nb_args) {
       *(command->args + i++) = astrcpy(tok);
@@ -89,6 +90,7 @@ struct command *parse_debug(const char* buffer) {
     // in case there are too many arguments
     if (tok != NULL)
     {
+        pr_info("debug: too many args\n");
         kfree(tok); // TODO: strsep free tok ?
         command_free(command);
         return NULL;
@@ -117,6 +119,6 @@ struct command *parse_command(const char *buffer){
         pr_err("command not found: '%s'\n", buffer);
         return NULL;
     }
-    pr_info("Command found: %s\n", buffer);
+    pr_info("Command found: %s\n", map_command[command_type]);
     return jump_parse[command_type](buffer);
 }
