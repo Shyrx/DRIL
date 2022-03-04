@@ -96,7 +96,7 @@ static enum DEBUG_OPE get_debug_op(char *buffer, int log_level)
 			return DEBUG_STATUS;
 	  }
 
-	 LOG("debug: first argument should be 'on' or 'off', was something else", LOG_ERROR, log_level);
+	 LOG("debug: first argument should be 'on', 'off' or 'status', but was something else", LOG_ERROR, log_level);
 	 return DEBUG_UNKOWN;
 }
 
@@ -135,7 +135,7 @@ int process_debug(struct command *command, struct regmap *regmap, struct mfrc522
 			LOG("debug: enabling all logs", LOG_INFO, mfrc522_driver_dev->log_level);
 			return 0;
 	  case DEBUG_OFF:
-			if (command->nb_arg != 1)
+			if (command->nb_arg > 1)
 				 break;
 			LOG("debug: disabling all logs", LOG_INFO, mfrc522_driver_dev->log_level);
 			mfrc522_driver_dev->log_level = 0;
