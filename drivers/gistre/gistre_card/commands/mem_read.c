@@ -2,11 +2,14 @@
 
 #define READ_NB_ARG 0
 
+#include "utils.h"
+
 /**
  * @param buffer: the buffer containing the data to process
  * @return an allocated struct of kind COMMAND_READ
  */
 struct command *parse_read(const char *buffer) {
+    // TODO: check arg number
     struct command *command = command_init(COMMAND_READ, 0);
     return command;
 }
@@ -18,7 +21,7 @@ struct command *parse_read(const char *buffer) {
 of the device.
  * @return the number of byte read, or a negative number if an error occured.
  */
-static ssize_t process_read(struct command *command, struct regmap *regmap, struct mfrc522_driver_dev *mfrc522_driver_dev)
+int process_read(struct command *command, struct regmap *regmap, struct mfrc522_driver_dev *mfrc522_driver_dev)
 {
     // TODO Check number arg
     LOG("read: trying to read from card...", LOG_EXTRA, mfrc522_driver_dev->log_level)
@@ -50,6 +53,9 @@ static ssize_t process_read(struct command *command, struct regmap *regmap, stru
             break;
         }
         i++;
+    }
+    if (flush_fifo(regmap, mfrc522_driver_dev->log_level) < 0) {
+        return -1;
     }
     LOG("read: operation successful", LOG_EXTRA, mfrc522_driver_dev->log_level);
     mfrc522_driver_dev->contains_data = true;

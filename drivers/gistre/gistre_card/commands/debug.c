@@ -1,10 +1,28 @@
-#include "command.h"
-
 #include <linux/slab.h>
 
+#include "command.h"
 #include "utils.h"
 
 #define DEBUG_NAME "debug"
+
+static const char* jump_debug_to_string[] = {
+[LOG_INFO] = "info",
+[LOG_TRACE] = "trace",
+[LOG_WARN] = "warn",
+[LOG_EXTRA] = "extra",
+[LOG_ERROR] = "error"
+};
+
+const char *enum_log_to_string_message(int log_level) {
+    switch(log_level) {
+        case LOG_INFO: return "[INFO] ";
+        case LOG_TRACE: return "[TRACE] ";
+        case LOG_WARN: return "[WARNING] ";
+        case LOG_EXTRA: return "[DEBUG] ";
+        case LOG_ERROR: return "[ERROR] ";
+        default: return "";
+    }
+}
 
 /**
  * @param buffer: the buffer containing the data to process
@@ -73,15 +91,15 @@ static enum LOG_LEVEL find_log_level(char *level, int log_level)
 of the device.
  * @return a negative integer if an error occured, zero otherwise.
  */
-ssize_t process_debug(struct command *command, struct regmap *regmap /* unused */, struct mfrc_dev *mfrc_dev) {
-    int current_level = mfrc_dev->log_level;
-    int set = set_log(command->args[0], mfrc_dev->log_level);
+int process_debug(struct command *command, struct regmap *regmap, struct mfrc522_driver_dev *mfrc522_driver_dev) {
+    int current_level = mfrc522_driver_dev->log_level;
+    int set = set_log(command->args[0], mfrc522_driver_dev->log_level);
     if (set == -1)
         return -1;
 
     int i = 1;
     while (i < command->nb_arg) {
-        enum LOG_LEVEL log_level = find_log_level(*(command->args + i), mfrc_dev->log_level);
+        enum LOG_LEVEL log_level = find_log_level(*(command->args + i), mfrc522_driver_dev->log_level);
 
         if (log_level == LOG_NOT_FOUND) {
             return -1;

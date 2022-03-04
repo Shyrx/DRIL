@@ -1,7 +1,6 @@
 #include "command.h"
 
 #include <linux/slab.h>
-#include <linux/regmap.h>
 
 #include "../../mfrc522.h"
 
@@ -32,27 +31,6 @@ void command_free(struct command *command) {
     kfree(command->args);
     kfree(command);
 }
-
-// TODO Move to debug
-static const char* jump_debug_to_string[] = {
-[LOG_INFO] = "info",
-[LOG_TRACE] = "trace",
-[LOG_WARN] = "warn",
-[LOG_EXTRA] = "extra",
-[LOG_ERROR] = "error"
-};
-
-const char *enum_log_to_string_message(int log_level) {
-    switch(log_level) {
-        case LOG_INFO: return "[INFO] ";
-        case LOG_TRACE: return "[TRACE] ";
-        case LOG_WARN: return "[WARNING] ";
-        case LOG_EXTRA: return "[DEBUG] ";
-        case LOG_ERROR: return "[ERROR] ";
-        default: return "";
-    }
-}
-
 
 // ##### PARSING #####
 
@@ -89,12 +67,12 @@ struct command *parse_command(const char *buffer){
 
 // ##### PROCESSING #####
 
-typedef ssize_t (*map_process_command)(struct command *command, struct regmap *regmap, struct mfrc_dev *mfrc_dev);
+typedef int (*map_process_command)(struct command *command, struct regmap *regmap, struct mfrc522_driver_dev *mfrc522_driver_dev);
 
 static const map_process_command jump_process[] = {
 [COMMAND_WRITE] = process_write,
 [COMMAND_READ] = process_read,
-[COMMAND_DEBUG] = process_debug
+[COMMAND_DEBUG] = process_debug,
 };
 
 static struct regmap *find_regmap(void)
@@ -102,7 +80,7 @@ static struct regmap *find_regmap(void)
     return mfrc522_get_regmap(dev_to_mfrc522(mfrc522_find_dev()));
 }
 
-ssize_t process_command(struct command *command, struct mfrc522_driver_dev *mfrc522_driver_dev)
+int process_command(struct command *command, struct mfrc522_driver_dev *mfrc522_driver_dev)
 {
     // no need to check, would not reach this point if the command was unknown
     return jump_process[command->command_type](command, find_regmap(), mfrc522_driver_dev);

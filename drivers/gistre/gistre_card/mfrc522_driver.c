@@ -13,11 +13,11 @@ int mfrc522_driver_open(struct inode *inode, struct file *file) {
 	unsigned int i_major = imajor(inode);
 	unsigned int i_minor = iminor(inode);
 	if (i_major != major) {
-		pr_err("Invalid major %d, expected %d\n", i_major, major);
+        LOG("open: invalid major, exiting", LOG_ERROR, LOG_ERROR);
 		return -EINVAL;
 	}
 
-    pr_debug("mfrc_open: major '%u', minor '%u'\n", i_major, i_minor);
+    pr_debug("mfrc_open: major '%u', minor '%u'\n", i_major, i_minor); // TO MODIFY
     file->private_data = mfrc522_driver_dev;
 
 	return 0;
@@ -36,7 +36,7 @@ ssize_t mfrc522_driver_read(struct file *file, char __user *buf,
 
     // check if data exists
     if (!dev->contains_data) {
-        pr_warn("\nNo data in internal buffer\n");
+        LOG("read: no data to read from internal buffer", LOG_WARN, dev->log_level);
         return 0;
     }
 
@@ -52,7 +52,7 @@ ssize_t mfrc522_driver_read(struct file *file, char __user *buf,
 
     // Flush internal buffer
     if (copy_to_user(buf, data, INTERNAL_BUFFER_SIZE + 1)) {
-        pr_err("Failed to copy data to user\n");
+        LOG("read: failed to copy data to user", LOG_ERROR, dev->log_level);
         return -EFAULT;
     }
 
@@ -63,17 +63,15 @@ ssize_t mfrc522_driver_read(struct file *file, char __user *buf,
     return INTERNAL_BUFFER_SIZE;
 }
 
-ssize_t mfrc522_driver_write(struct file *file, const char __user *user_buf,
-        size_t len, loff_t *off /* unused */) {
+ssize_t mfrc522_driver_write(struct file *file, const char __user *user_buf, size_t len, loff_t *off /* unused */) {
 	struct mfrc522_driver_dev *dev;
     dev = file->private_data;
-    
     char buff[MAX_ACCEPTED_COMMAND_SIZE + 1];
 
     memset(buff, 0, MAX_ACCEPTED_COMMAND_SIZE + 1);
 
     if (copy_from_user(buff, user_buf, MAX_ACCEPTED_COMMAND_SIZE)) {
-        pr_err("Failed to copy user");
+        LOG("write: failed to copy data from user", LOG_ERROR, dev->log_level);
         return -EFAULT;
     }
 
@@ -81,7 +79,6 @@ ssize_t mfrc522_driver_write(struct file *file, const char __user *user_buf,
     if (command == NULL) {
         return -EFAULT;
     }
-    
 	if (process_command(command, dev) < 0) {
         return -EFAULT;
     }
@@ -125,7 +122,8 @@ static void mfrc522_driver_exit(void) {
 
 __init
 static int mfrc522_driver_init(void) {
-    pr_info("Hello, GISTRE card !\n");
+    LOG("Hello, GISTRE card !", LOG_INFO, LOG_INFO);
+
 	dev_t dev;
 	int ret;
 	const char devname[] = "mfrc0";
@@ -133,23 +131,18 @@ static int mfrc522_driver_init(void) {
 	/* Allocate major */
 	ret = alloc_chrdev_region(&dev, 0, 1, devname);
 	if (ret < 0) {
-		pr_err("Failed to allocate major\n");
 		return 1;
 	}
-	else {
-		major = MAJOR(dev);
-		pr_info("Got major %d\n", major);
-	}
+    major = MAJOR(dev);
+    pr_info("Got major %d\n", major);
 
 	/* Allocate our device structure */
 	mfrc522_driver_dev = kmalloc(sizeof(*mfrc522_driver_dev), GFP_KERNEL);
 	if (! mfrc522_driver_dev) {
-		pr_err("Failed to allocate struct mfrc522_driver_dev\n");
+        LOG("init: failed to allocate struct mfrc522_driver_dev", LOG_ERROR, LOG_ERROR);
 		return -ENOMEM;
 	}
-	else {
-		pr_debug("Allocated struct mfrc522_driver_dev\n");
-	}
+    LOG("init: allocated struct mfrc522_driver_dev", LOG_INFO, LOG_INFO);
 
     // Enable error logs by default
     mfrc522_driver_dev->log_level = LOG_ERROR;
@@ -160,13 +153,11 @@ static int mfrc522_driver_init(void) {
 
 	ret = cdev_add(&mfrc522_driver_dev->cdev, dev, 1);
 	if (ret < 0) {
-		pr_err("Failed to register char device\n");
+        LOG("init: failed to add device", LOG_ERROR, mfrc522_driver_dev->log_level);
 		return -ENOMEM;
 	}
-	else {
-		pr_debug("Registered char device\n");
-	}
-
+    // TODO: add major in print
+    LOG("init: device successfully initialized", LOG_INFO, LOG_INFO);
 	return 0;
 }
 

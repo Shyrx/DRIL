@@ -1,4 +1,7 @@
+#include <linux/slab.h>
+
 #include "command.h"
+#include "utils.h"
 
 #define WRITE_NB_ARG 2
 #define WRITE_NAME "mem_write"
@@ -38,7 +41,7 @@ struct command *parse_write(const char* buffer) {
 of the device.
  * @return the number of byte read, or a negative number if an error occured.
  */
-static ssize_t process_write(struct command *command, struct regmap *regmap, struct mfrc522_driver_dev *mfrc522_driver_dev)
+int process_write(struct command *command, struct regmap *regmap, struct mfrc522_driver_dev *mfrc522_driver_dev)
 {
     LOG("write: trying to write on card", LOG_EXTRA, mfrc522_driver_dev->log_level);
     int data_size;
@@ -51,10 +54,7 @@ static ssize_t process_write(struct command *command, struct regmap *regmap, str
         data_size = INTERNAL_BUFFER_SIZE;
     }
 
-    // Flush all the data
-    if (regmap_write(regmap, MFRC522_FIFOLEVELREG, 0))
-    {
-        LOG("write: couldn't flush card, aborting", LOG_ERROR, mfrc522_driver_dev->log_level);
+    if (flush_fifo(regmap, mfrc522_driver_dev->log_level) < 0) {
         return -1;
     }
 
