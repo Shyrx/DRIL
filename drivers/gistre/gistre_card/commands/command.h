@@ -27,11 +27,14 @@ LOG_NOT_FOUND = 32,
 
 const char *enum_log_to_string_message(int log_level);
 
-// TODO: check if it respects the coding style
-#define LOG(message, level_required, log_level)				 \
-	if (log_level & level_required) {								   \
-	pr_info("%s%s\n", enum_log_to_string_message(level_required), message); \
-	}
+#define LOG(message, level_required, log_level)	\
+	do {																\
+		if (log_level & level_required) {								\
+			pr_info("%s%s\n",											\
+					enum_log_to_string_message(level_required),			\
+					message);											\
+		}																\
+	} while (0)
 
 struct command {
 	enum COMMAND_TYPE command_type;
@@ -41,7 +44,8 @@ struct command {
 
 
 struct command *parse_command(const char *buf);
-ssize_t process_command(struct command *command, struct mfrc522_driver_dev *mfrc522_driver_dev);
+ssize_t process_command(struct command *command,
+						struct mfrc522_driver_dev *mfrc522_driver_dev);
 
 struct command *command_init(enum COMMAND_TYPE type, int nb_args);
 void command_free(struct command *command);
@@ -50,8 +54,11 @@ struct command *parse_write(const char *buffer);
 struct command *parse_read(const char *buffer);
 struct command *parse_debug(const char *buffer);
 
-ssize_t process_write(struct command *command, struct regmap *regmap, struct mfrc_dev *mfrc_dev);
-ssize_t process_read(struct command *command, struct regmap *regmap, struct mfrc_dev *mfrc_dev);
-ssize_t process_debug(struct command *command, struct regmap *regmap, struct mfrc_dev *mfrc_dev);
+ssize_t process_write(struct command *command, struct regmap *regmap,
+					  struct mfrc_dev *mfrc_dev);
+ssize_t process_read(struct command *command, struct regmap *regmap,
+					 struct mfrc_dev *mfrc_dev);
+ssize_t process_debug(struct command *command, struct regmap *regmap,
+					  struct mfrc_dev *mfrc_dev);
 
 #endif
