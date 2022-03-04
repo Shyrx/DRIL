@@ -15,7 +15,7 @@ int mfrc522_driver_open(struct inode *inode, struct file *file)
 	unsigned int i_minor = iminor(inode);
 
 	if (i_major != major) {
-		pr_err("Invalid major %d, expected %d\n", i_major, major);
+        LOG("open: invalid major, exiting", LOG_ERROR, LOG_ERROR);
 		return -EINVAL;
 	}
 
@@ -114,7 +114,6 @@ static void mfrc522_driver_exit(void)
 
 	/* Unregister char device */
 	cdev_del(&mfrc522_driver_dev->cdev);
-	pr_debug("Unregistered char device\n");
 
 	/* Free mfrc522_driver_dev structure */
 	kfree(mfrc522_driver_dev);
@@ -125,13 +124,13 @@ static void mfrc522_driver_exit(void)
 	unregister_chrdev_region(dev, 1);
 	pr_debug("Released major %d\n", major);
 
-	pr_info("Stopping driver support for MFRC_522 card\n");
+    LOG("Stopping driver support for MFRC_522 card", LOG_INFO, LOG_INFO);
 }
 
 __init
-static int mfrc522_driver_init(void)
-{
-	pr_info("Hello, GISTRE card !\n");
+static int mfrc522_driver_init(void) {
+    LOG("Hello, GISTRE card !", LOG_INFO, LOG_INFO);
+
 	dev_t dev;
 	int ret;
 	const char devname[] = "mfrc0";
@@ -139,17 +138,18 @@ static int mfrc522_driver_init(void)
 	/* Allocate major */
 	ret = alloc_chrdev_region(&dev, 0, 1, devname);
 	if (ret < 0) {
-		pr_err("Failed to allocate major\n");
 		return 1;
 	}
-
-	major = MAJOR(dev);
-	pr_info("Got major %d\n", major);
+    major = MAJOR(dev);
+    pr_info("Got major %d\n", major);
 
 	/* Allocate our device structure */
 	mfrc522_driver_dev = kmalloc(sizeof(*mfrc522_driver_dev), GFP_KERNEL);
-	if (!mfrc522_driver_dev)
+	if (! mfrc522_driver_dev) {
+        LOG("init: failed to allocate struct mfrc522_driver_dev", LOG_ERROR, LOG_ERROR);
 		return -ENOMEM;
+	}
+    LOG("init: allocated struct mfrc522_driver_dev", LOG_INFO, LOG_INFO);
 
 	pr_debug("Allocated struct mfrc522_driver_dev\n");
 
@@ -161,11 +161,12 @@ static int mfrc522_driver_init(void)
 	cdev_init(&mfrc522_driver_dev->cdev, &mfrc_fops);
 
 	ret = cdev_add(&mfrc522_driver_dev->cdev, dev, 1);
-	if (ret < 0)
+	if (ret < 0) {
+        LOG("init: failed to add device", LOG_ERROR, mfrc522_driver_dev->log_level);
 		return -ENOMEM;
-
-	pr_debug("Registered char device\n");
-
+	}
+    // TODO: add major in print
+    LOG("init: device successfully initialized", LOG_INFO, LOG_INFO);
 	return 0;
 }
 
