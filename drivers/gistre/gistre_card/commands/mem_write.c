@@ -73,8 +73,8 @@ int process_write(struct command *command, struct regmap *regmap,
 				  LOG("write: failed to fill FIFO with zeroes", LOG_ERROR, mfrc522_driver_dev->log_level);
 				return -1;
 		  }
+          data_wrote[i] = 0;
 		  i++;
-		  data_wrote[i] = 0;
 	 }
 	 LOG("write: operation successful", LOG_EXTRA, mfrc522_driver_dev->log_level);
 	 dump_trace(data_wrote, false, mfrc522_driver_dev->log_level);
