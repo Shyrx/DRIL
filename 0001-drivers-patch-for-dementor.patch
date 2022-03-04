@@ -1,0 +1,939 @@
+From 3172750f815cc9e7654cbf572d9ec14e8ef63061 Mon Sep 17 00:00:00 2001
+From: "thomas.crambert" <thomas.crambert@epita.fr>
+Date: Fri, 4 Mar 2022 22:15:41 +0100
+Subject: [PATCH] drivers: patch for dementor
+
+---
+ drivers/gistre/Kconfig                        |   4 +-
+ drivers/gistre/Makefile                       |   5 +
+ drivers/gistre/gistre_card/Kconfig            |   6 +
+ drivers/gistre/gistre_card/Makefile           |   5 +
+ drivers/gistre/gistre_card/commands/Makefile  |   6 +
+ drivers/gistre/gistre_card/commands/command.c | 102 ++++++++++
+ drivers/gistre/gistre_card/commands/command.h |  63 ++++++
+ drivers/gistre/gistre_card/commands/debug.c   | 166 ++++++++++++++++
+ .../gistre/gistre_card/commands/mem_read.c    |  65 +++++++
+ .../gistre/gistre_card/commands/mem_write.c   |  82 ++++++++
+ drivers/gistre/gistre_card/commands/utils.c   |  84 ++++++++
+ drivers/gistre/gistre_card/commands/utils.h   |  14 ++
+ drivers/gistre/gistre_card/mfrc522_driver.c   | 179 ++++++++++++++++++
+ drivers/gistre/gistre_card/mfrc522_driver.h   |  30 +++
+ 14 files changed, 809 insertions(+), 2 deletions(-)
+ create mode 100644 drivers/gistre/gistre_card/Kconfig
+ create mode 100644 drivers/gistre/gistre_card/Makefile
+ create mode 100644 drivers/gistre/gistre_card/commands/Makefile
+ create mode 100644 drivers/gistre/gistre_card/commands/command.c
+ create mode 100644 drivers/gistre/gistre_card/commands/command.h
+ create mode 100644 drivers/gistre/gistre_card/commands/debug.c
+ create mode 100644 drivers/gistre/gistre_card/commands/mem_read.c
+ create mode 100644 drivers/gistre/gistre_card/commands/mem_write.c
+ create mode 100644 drivers/gistre/gistre_card/commands/utils.c
+ create mode 100644 drivers/gistre/gistre_card/commands/utils.h
+ create mode 100644 drivers/gistre/gistre_card/mfrc522_driver.c
+ create mode 100644 drivers/gistre/gistre_card/mfrc522_driver.h
+
+diff --git a/drivers/gistre/Kconfig b/drivers/gistre/Kconfig
+index d727549..2776682 100644
+--- a/drivers/gistre/Kconfig
++++ b/drivers/gistre/Kconfig
+@@ -1,8 +1,8 @@
+ #
+-# GISTRE drivers
++# Should describe what the driver can do
+ #
+ 
+-menu "GISTRE drivers support"
++menu "MFRC522 GISTRE drivers support"
+ 
+ config MFRC522_EMU
+ 	bool "GISTRE MFRC522 emulator"
+diff --git a/drivers/gistre/Makefile b/drivers/gistre/Makefile
+index fefea26..79ff174 100644
+--- a/drivers/gistre/Makefile
++++ b/drivers/gistre/Makefile
+@@ -4,3 +4,8 @@ obj-$(CONFIG_MFRC522_EMU)        += \
+ 	mfrc522_emu_internals.o \
+ 	mfrc522_emu.o \
+ 	mfrc522_emu_drv.o
++
++# Add the directory where our builtin module is
++obj-y += \
++	gistre_card/
++
+diff --git a/drivers/gistre/gistre_card/Kconfig b/drivers/gistre/gistre_card/Kconfig
+new file mode 100644
+index 0000000..781748c
+--- /dev/null
++++ b/drivers/gistre/gistre_card/Kconfig
+@@ -0,0 +1,6 @@
++config MFRC_522_DRIVER
++       bool "enable driver for MFRC_522 Card"
++       depends on MFRC522_EMU
++       help
++       # TODO
++        "Description of what our module do"
+diff --git a/drivers/gistre/gistre_card/Makefile b/drivers/gistre/gistre_card/Makefile
+new file mode 100644
+index 0000000..3946633
+--- /dev/null
++++ b/drivers/gistre/gistre_card/Makefile
+@@ -0,0 +1,5 @@
++# The sources of our module
++# Not sure if it should be := or +=
++obj-y += \
++	commands/ \
++	mfrc522_driver.o
+diff --git a/drivers/gistre/gistre_card/commands/Makefile b/drivers/gistre/gistre_card/commands/Makefile
+new file mode 100644
+index 0000000..d346559
+--- /dev/null
++++ b/drivers/gistre/gistre_card/commands/Makefile
+@@ -0,0 +1,6 @@
++obj-y += \
++	command.o \
++	utils.o  \
++	mem_read.o \
++	mem_write.o \
++	debug.o
+diff --git a/drivers/gistre/gistre_card/commands/command.c b/drivers/gistre/gistre_card/commands/command.c
+new file mode 100644
+index 0000000..15ea3b8
+--- /dev/null
++++ b/drivers/gistre/gistre_card/commands/command.c
+@@ -0,0 +1,102 @@
++#include "command.h"
++
++#include <linux/slab.h>
++
++#include "../../mfrc522.h"
++
++/**
++ * @param type: the type of the command
++ * @param nb_args: the args the command takes
++ * @return an allocated struct with every field correctly allocated
++ */
++struct command *command_init(enum COMMAND_TYPE type, int nb_args)
++{
++	struct command *command = kmalloc(sizeof(struct command), GFP_KERNEL);
++
++	command->args = kmalloc_array(nb_args, sizeof(char *), GFP_KERNEL);
++	command->nb_arg = nb_args;
++	command->command_type = type;
++	return command;
++}
++
++/**
++ * @param type: the type of the command
++ * @param nb_args: the args the command takes
++ * @return an allocated struct with every allocated
++ */
++void command_free(struct command *command)
++{
++	int i = 0;
++
++	while (i < command->nb_arg) {
++	kfree(*(command->args + i));
++	i++;
++	}
++	kfree(command->args);
++	kfree(command);
++}
++
++// ############################ PARSING #################################
++
++static const char * const map_command[] = {
++[COMMAND_WRITE] = "mem_write",
++[COMMAND_READ] = "mem_read",
++[COMMAND_DEBUG] = "debug"
++};
++
++typedef struct command* (*map_parse_command)(const char *buffer, int log_level);
++
++static const map_parse_command jump_parse[] = {
++[COMMAND_WRITE] = parse_write,
++[COMMAND_READ] = parse_read,
++[COMMAND_DEBUG] = parse_debug,
++};
++
++/**
++ * @param buffer: the command to parse
++ * @param log_level: current log enable
++ * @return a struct command corresponding to the parsed command. Caution,
++ * only sanity checks are done.
++ */
++struct command *parse_command(const char *buffer, int log_level)
++{
++	pr_info("Parsing command: %s\n", buffer);
++	enum COMMAND_TYPE command_type = 0;
++	// kind of ugly, move into dedicated function ?
++	while (command_type != COMMAND_NOT_FOUND
++			&& strncmp(buffer, map_command[command_type],
++					  strlen(map_command[command_type])) != 0) {
++		command_type++;
++	}
++
++	if (command_type == COMMAND_NOT_FOUND) {
++		return NULL;
++	}
++
++	return jump_parse[command_type](buffer, log_level);
++}
++
++// ############################ PROCESSING #################################
++
++typedef int (*map_process_command)
++(struct command *command, struct regmap *regmap,
++struct mfrc522_driver_dev *mfrc522_driver_dev);
++
++static const map_process_command jump_process[] = {
++[COMMAND_WRITE] = process_write,
++[COMMAND_READ] = process_read,
++[COMMAND_DEBUG] = process_debug,
++};
++
++static struct regmap *find_regmap(void)
++{
++	return mfrc522_get_regmap(dev_to_mfrc522(mfrc522_find_dev()));
++}
++
++int process_command(struct command *command,
++					struct mfrc522_driver_dev *mfrc522_driver_dev)
++{
++	return jump_process[command->command_type]
++		(command, find_regmap(), mfrc522_driver_dev);
++}
++
+diff --git a/drivers/gistre/gistre_card/commands/command.h b/drivers/gistre/gistre_card/commands/command.h
+new file mode 100644
+index 0000000..6b3570e
+--- /dev/null
++++ b/drivers/gistre/gistre_card/commands/command.h
+@@ -0,0 +1,63 @@
++#ifndef COMMAND_H
++#define COMMAND_H
++
++#include <linux/kernel.h>
++#include <linux/module.h>
++#include <linux/regmap.h>
++
++#include "../mfrc522_driver.h"
++#include "../../mfrc522.h"
++
++struct mfrc_dev;
++
++enum COMMAND_TYPE {
++	COMMAND_READ = 0,
++	COMMAND_WRITE,
++	COMMAND_DEBUG,
++	COMMAND_NOT_FOUND,
++};
++
++enum LOG_LEVEL {
++LOG_INFO = 1,
++LOG_TRACE = 2,
++LOG_WARN = 4,
++LOG_EXTRA = 8,
++LOG_ERROR = 16,
++LOG_NOT_FOUND = 32,
++};
++
++const char *enum_log_to_string_message(int log_level);
++
++#define LOG(message, level_required, log_level)	\
++	do { \
++		if (log_level & level_required) { \
++			 printk(KERN_CONT "%s%s\n", \
++					enum_log_to_string_message(level_required), \
++					message); \
++		} \
++	} while (0)
++
++struct command {
++	enum COMMAND_TYPE command_type;
++	char **args;
++	int nb_arg;
++};
++
++struct command *command_init(enum COMMAND_TYPE type, int nb_args);
++void command_free(struct command *command);
++
++struct command *parse_command(const char *buf, int log_level);
++struct command *parse_write(const char *buffer, int log_level);
++struct command *parse_read(const char *buffer, int log_level);
++struct command *parse_debug(const char *buffer, int log_level);
++
++int process_command(struct command *command,
++					struct mfrc522_driver_dev *mfrc522_driver_dev);
++int process_write(struct command *command, struct regmap *regmap,
++				  struct mfrc522_driver_dev *mfrc522_driver_dev);
++int process_read(struct command *command, struct regmap *regmap,
++				 struct mfrc522_driver_dev *mfrc522_driver_dev);
++int process_debug(struct command *command, struct regmap *regmap,
++				  struct mfrc522_driver_dev *mfrc522_driver_dev);
++
++#endif
+diff --git a/drivers/gistre/gistre_card/commands/debug.c b/drivers/gistre/gistre_card/commands/debug.c
+new file mode 100644
+index 0000000..9afc3a0
+--- /dev/null
++++ b/drivers/gistre/gistre_card/commands/debug.c
+@@ -0,0 +1,166 @@
++#include <linux/slab.h>
++
++#include "command.h"
++#include "utils.h"
++
++#define DEBUG_NAME "debug"
++#define ENABLE_ALL_LOGS \
++	(LOG_ERROR | LOG_WARN | LOG_EXTRA | LOG_TRACE | LOG_INFO)
++
++static const char * const jump_debug_to_string[] = {
++[LOG_INFO] = "info",
++[LOG_TRACE] = "trace",
++[LOG_WARN] = "warn",
++[LOG_EXTRA] = "extra",
++[LOG_ERROR] = "error"
++};
++
++enum DEBUG_OPE {
++	 DEBUG_UNKOWN = -1,
++	 DEBUG_ON = 0,
++	 DEBUG_OFF = 1,
++	 DEBUG_STATUS = 2,
++};
++
++/**
++ * @param log_level: the log level to get the string representation
++ * @return the string representation of the given log_level
++ */
++const char *enum_log_to_string_message(int log_level)
++{
++	switch (log_level) {
++	case LOG_INFO: return "[INFO] ";
++	case LOG_TRACE: return "[TRACE] ";
++	case LOG_WARN: return "[WARNING] ";
++	case LOG_EXTRA: return "[DEBUG] ";
++	case LOG_ERROR: return "[ERROR] ";
++	default: return "";
++	}
++}
++
++/**
++ * @param buffer: the buffer containing the data to process
++ * @return an allocated struct of kind COMMAND_DEBUG
++ */
++struct command *parse_debug(const char *buffer, int log_level)
++{
++	int nb_args = count_separator_occurence(buffer, ':');
++
++	if (nb_args == 0) {
++		LOG("debug: expected at least one argument, but none were given",
++			LOG_ERROR, log_level);
++		return NULL;
++	}
++	struct command *command = command_init(COMMAND_DEBUG, nb_args);
++
++	return get_args(command, buffer, nb_args, DEBUG_NAME);
++}
++
++static void print_enabled_log_levels(int log_level)
++{
++	 char enabled_logs[200];
++	 memset(enabled_logs, 0, 200);
++	 int i = 1;
++	 int current_size = 0;
++	 while (i < LOG_NOT_FOUND) {
++		  if (i & log_level) {
++				const char *level_to_string = jump_debug_to_string[i];
++				current_size += snprintf(&enabled_logs[current_size],
++												 current_size + strlen(level_to_string) + 1, "%s%s",
++												 current_size == 0 ? "" : ", ", level_to_string);
++		  }
++		  i <<= 1;
++	 }
++	 char to_print[250];
++	 memset(to_print, 0, 200);
++	 snprintf(to_print, current_size + strlen("Enabled levels of debug: ") + 1,
++				 "Enabled levels of debug: %s", enabled_logs);
++	 LOG(to_print, LOG_EXTRA, LOG_EXTRA);
++}
++
++/**
++ * @param buffer: the buffer containing the command
++ * @return an enum with value corresponding to the kind of the debug operation to perform
++ */
++static enum DEBUG_OPE get_debug_op(char *buffer, int log_level)
++{
++	 if (strcmp(buffer, "on") == 0) {
++			LOG("debug: enabling log levels...", LOG_EXTRA, log_level);
++			return DEBUG_ON;
++	 }
++	 if (strcmp(buffer, "off") == 0) {
++			LOG("debug: disabling log levels...", LOG_EXTRA, log_level);
++			return DEBUG_OFF;
++	 }
++	  if (strcmp(buffer, "status") == 0) {
++			return DEBUG_STATUS;
++	  }
++
++	 LOG("debug: first argument should be 'on', 'off' or 'status', but was something else", LOG_ERROR, log_level);
++	 return DEBUG_UNKOWN;
++}
++
++static enum LOG_LEVEL find_log_level(char *level, int log_level)
++{
++	int i = 1;
++	// TODO ugly, should be changed
++	while (i < LOG_NOT_FOUND
++			&& strcmp(level, jump_debug_to_string[i]) != 0)
++		i <<= 1;
++
++	if (i == LOG_NOT_FOUND)
++		LOG("debug: unidentified debug level", LOG_ERROR, log_level);
++
++	return i;
++}
++
++/**
++ * @param command: the struct command containing what is needed to perform
++ * a `debug` call, need not to be checked beforehand.
++ * @param regmap: a struct containing the API used to communicate with the card.
++ * @param mfrc_dev: a struct containing the data related to the current context
++of the device.
++ * @return a negative integer if an error occured, zero otherwise.
++ */
++
++int process_debug(struct command *command, struct regmap *regmap, struct mfrc522_driver_dev *mfrc522_driver_dev)
++{
++	 int current_level = mfrc522_driver_dev->log_level;
++	 enum DEBUG_OPE debug_op = get_debug_op(command->args[0], mfrc522_driver_dev->log_level);
++	  switch (debug_op) {
++	  case DEBUG_ON:
++			if (command->nb_arg > 1)
++				 break;
++			mfrc522_driver_dev->log_level = ENABLE_ALL_LOGS;
++			LOG("debug: enabling all logs", LOG_INFO, mfrc522_driver_dev->log_level);
++			return 0;
++	  case DEBUG_OFF:
++			if (command->nb_arg > 1)
++				 break;
++			LOG("debug: disabling all logs", LOG_INFO, mfrc522_driver_dev->log_level);
++			mfrc522_driver_dev->log_level = 0;
++			return 0;
++	  case DEBUG_STATUS:
++			print_enabled_log_levels(mfrc522_driver_dev->log_level);
++			return 0;
++	  default:
++			return -1;
++	  }
++
++	  int i = 1;
++	  while (i < command->nb_arg) {
++			enum LOG_LEVEL log_level = find_log_level(*(command->args + i), mfrc522_driver_dev->log_level);
++
++			if (log_level == LOG_NOT_FOUND)
++				 return -1;
++
++			if (debug_op == DEBUG_ON)
++				 current_level |= log_level;
++			else
++				 current_level &= ~log_level;
++			i++;
++	  }
++	  LOG("debug: log mode updated successfully", LOG_EXTRA, mfrc522_driver_dev->log_level);
++	  mfrc522_driver_dev->log_level = current_level;
++	  return 0;
++}
+diff --git a/drivers/gistre/gistre_card/commands/mem_read.c b/drivers/gistre/gistre_card/commands/mem_read.c
+new file mode 100644
+index 0000000..04b20d7
+--- /dev/null
++++ b/drivers/gistre/gistre_card/commands/mem_read.c
+@@ -0,0 +1,65 @@
++#include "command.h"
++
++#define READ_NB_ARG 0
++
++#include "utils.h"
++
++/**
++ * @param buffer: the buffer containing the data to process
++ * @return an allocated struct of kind COMMAND_READ
++ */
++struct command *parse_read(const char *buffer, int log_level)
++{
++	int nb_args = count_separator_occurence(buffer, ':');
++
++	if (nb_args != 0) {
++		LOG("read: expected no arguments, but some were given",
++			LOG_ERROR, log_level);
++		return NULL;
++	}
++
++	return command_init(COMMAND_READ, 0);
++}
++
++/**
++ * @param type: the struct command containing what is needed to perform
++ * a `read` call, need not to be checked beforehand.
++ * @param regmap: a struct containing the API used to communicate with
++ * the card.
++ * @param mfrc522_driver_dev: a struct containing the data related to
++ * the current context of the device.
++ * @return the number of byte read, or a negative number if an error occured.
++ */
++int process_read(struct command *command, struct regmap *regmap,
++				 struct mfrc522_driver_dev *mfrc522_driver_dev)
++{
++	 LOG("read: trying to read from card...", LOG_EXTRA, mfrc522_driver_dev->log_level);
++	 mfrc522_driver_dev->contains_data = false;
++	 memset(mfrc522_driver_dev->data, 0, INTERNAL_BUFFER_SIZE + 1);
++	 unsigned int fifo_size = 0;
++	 if (regmap_read(regmap, MFRC522_FIFOLEVELREG, &fifo_size)) {
++			LOG("read: Failed to check fifo_size", LOG_ERROR, mfrc522_driver_dev->log_level);
++		  return -1;
++	 }
++	 if (fifo_size == 0) {
++			LOG("read: no data to read from card", LOG_WARN, mfrc522_driver_dev->log_level);
++		  return INTERNAL_BUFFER_SIZE;
++	 }
++	 pr_info("read: Card buffer size is %d\n", fifo_size);
++	 int i = 0;
++	 while (i < fifo_size) {
++		  int err = regmap_read(regmap, MFRC522_FIFODATAREG, mfrc522_driver_dev->data + i);
++		  if (err) {
++				  LOG("read: failed to read value from card", LOG_ERROR, mfrc522_driver_dev->log_level);
++				return -1;
++		  }
++		  i++;
++	 }
++	 if (flush_fifo(regmap, mfrc522_driver_dev->log_level) < 0)
++		  return -1;
++
++	 LOG("read: operation successful", LOG_EXTRA, mfrc522_driver_dev->log_level);
++	 dump_trace(mfrc522_driver_dev->data, true, mfrc522_driver_dev->log_level);
++	 mfrc522_driver_dev->contains_data = true;
++	 return INTERNAL_BUFFER_SIZE;
++}
+diff --git a/drivers/gistre/gistre_card/commands/mem_write.c b/drivers/gistre/gistre_card/commands/mem_write.c
+new file mode 100644
+index 0000000..4d09eba
+--- /dev/null
++++ b/drivers/gistre/gistre_card/commands/mem_write.c
+@@ -0,0 +1,82 @@
++#include <linux/slab.h>
++
++#include "command.h"
++#include "utils.h"
++
++#define WRITE_NB_ARG 2
++#define WRITE_NAME "mem_write"
++
++/**
++ * @param buffer: the buffer containing the data to process
++ * @return an allocated struct of kind COMMAND_WRITE
++ */
++struct command *parse_write(const char *buffer, int log_level)
++{
++
++	if (count_separator_occurence(buffer, ':') != WRITE_NB_ARG) {
++		LOG("write: too many or not enough arguments given, expected 2", LOG_ERROR, log_level);
++		return NULL;
++	}
++	struct command *command = command_init(COMMAND_WRITE, WRITE_NB_ARG);
++
++	return get_args(command, buffer, WRITE_NB_ARG, WRITE_NAME);
++}
++
++/**
++ * @param type: the struct command containing what is needed to perform
++ * a `write` call, need not to be checked beforehand.
++ * @param regmap: a struct containing the API used to communicate with
++ * the MFRC522 card.
++ * @param mfrc522_driver_dev: a struct containing the data related to
++ * the current context of the device.
++ * @return the number of byte read, or a negative number if an error occured.
++ */
++int process_write(struct command *command, struct regmap *regmap,
++				  struct mfrc522_driver_dev *mfrc522_driver_dev)
++{
++	LOG("write: trying to write on card", LOG_EXTRA,
++		mfrc522_driver_dev->log_level);
++	int data_size = check_arg_size(command, mfrc522_driver_dev->log_level);
++
++	if (data_size < 0) {
++		LOG("write: check on arguments failed", LOG_ERROR,
++			mfrc522_driver_dev->log_level);
++			return -1;
++	}
++	if (data_size > INTERNAL_BUFFER_SIZE) {
++		LOG("write: data too large, truncating", LOG_EXTRA,
++			mfrc522_driver_dev->log_level);
++		data_size = INTERNAL_BUFFER_SIZE;
++	}
++
++	if (flush_fifo(regmap, mfrc522_driver_dev->log_level) < 0)
++		return -1;
++
++	 unsigned int i = 0;
++	 unsigned int data_wrote[25];
++
++	 memset(data_wrote, 0, 25);
++	 while (i < data_size) {
++		  int err = regmap_write(regmap, MFRC522_FIFODATAREG, *(*(command->args + 1) + i));
++		  if (err) {
++				LOG("write: failed to write on card, aborting", LOG_ERROR, mfrc522_driver_dev->log_level);
++				return -1;
++		  }
++			 data_wrote[i] = *(*(command->args + 1) + i);
++		  i++;
++	 }
++	 LOG("write: finished to write user content", LOG_EXTRA, mfrc522_driver_dev->log_level);
++
++	 while (i < INTERNAL_BUFFER_SIZE) {
++		  int err = regmap_write(regmap, MFRC522_FIFODATAREG, 0);
++		  if (err) {
++				  LOG("write: failed to fill FIFO with zeroes", LOG_ERROR, mfrc522_driver_dev->log_level);
++				return -1;
++		  }
++          data_wrote[i] = 0;
++		  i++;
++	 }
++	 LOG("write: operation successful", LOG_EXTRA, mfrc522_driver_dev->log_level);
++	 dump_trace(data_wrote, false, mfrc522_driver_dev->log_level);
++	 return INTERNAL_BUFFER_SIZE;
++}
+diff --git a/drivers/gistre/gistre_card/commands/utils.c b/drivers/gistre/gistre_card/commands/utils.c
+new file mode 100644
+index 0000000..488ebc8
+--- /dev/null
++++ b/drivers/gistre/gistre_card/commands/utils.c
+@@ -0,0 +1,84 @@
++#include "utils.h"
++
++#include <linux/slab.h>
++#include <linux/string.h>
++
++/**
++ * @param buffer: source string to copy data from
++ * @return an allocated string with data from buffer
++ */
++char *astrcpy(const char *buffer)
++{
++	char *new = kmalloc_array(strlen(buffer), sizeof(char), GFP_KERNEL);
++
++	strcpy(new, buffer);
++	return new;
++}
++
++int count_separator_occurence(const char *buffer, const char separator)
++{
++	int i = 0;
++	int count = 0;
++
++	while (*(buffer + i) != '\0') {
++	if (*(buffer + i) == separator)
++		count++;
++	i++;
++	}
++	return count;
++}
++
++int check_arg_size(struct command *command, int log_level)
++{
++	long data_size;
++
++	if (kstrtol(*command->args, 10, &data_size) != 0) {
++		// add log here ?
++		return -1;
++	}
++	return data_size;
++}
++
++int flush_fifo(struct regmap *regmap, int log_level)
++{
++	 LOG("flush: flushing fifo", LOG_EXTRA, log_level);
++	 if (regmap_write(regmap, MFRC522_FIFOLEVELREG, MFRC522_FIFOLEVELREG_FLUSH)) {
++		  LOG("flush: couldn't flush card, aborting", LOG_ERROR, log_level);
++		  return -1;
++	 }
++	 return 0;
++}
++
++struct command *get_args(struct command *command, const char *buffer, int nb_args, const char *command_name)
++{
++	 char *new_buff = astrcpy(buffer);
++	 char *tok = NULL;
++	 char *sep = ":";
++	 new_buff += strlen(command_name) + 1;
++	 int i = 0;
++	 while ((tok = strsep(&new_buff, sep)) != NULL)
++		  // TODO: add log if LOG_EXTRA enabled to print all arguments parsed
++		  *(command->args + i++) = astrcpy(tok);
++
++	 kfree(new_buff);
++	 return command;
++}
++
++void dump_trace(const unsigned int *data, bool reading, int log_level)
++{
++	 if (!(log_level & LOG_TRACE))
++		  return;
++	 LOG("Dumping trace:", LOG_TRACE, log_level);
++	 printk(KERN_CONT "<%s>\n", reading ? "RD" : "WR");
++	 int i = 0;
++
++	 while (i < 5) {
++		  int j = 0;
++		  while (j < 5) {
++			 printk(KERN_CONT "%02x%s", data[i * 5 + j], (j < 4 ? " " : ""));
++			 j++;
++		  }
++		  printk(KERN_CONT "\n");
++		  i++;
++	 }
++}
+diff --git a/drivers/gistre/gistre_card/commands/utils.h b/drivers/gistre/gistre_card/commands/utils.h
+new file mode 100644
+index 0000000..e5e7185
+--- /dev/null
++++ b/drivers/gistre/gistre_card/commands/utils.h
+@@ -0,0 +1,14 @@
++#ifndef UTILS_H
++#define UTILS_H
++
++#include "command.h"
++
++char *astrcpy(const char *buffer);
++int count_separator_occurence(const char *buffer, const char separator);
++int check_arg_size(struct command *command, int log_level);
++int flush_fifo(struct regmap *regmap, int log_level);
++void dump_trace(const unsigned int *data, bool reading, int log_level);
++
++struct command *get_args(struct command *command, const char *buffer,
++						 int nb_args, const char *command_name);
++#endif // UTILS_H
+diff --git a/drivers/gistre/gistre_card/mfrc522_driver.c b/drivers/gistre/gistre_card/mfrc522_driver.c
+new file mode 100644
+index 0000000..726ea37
+--- /dev/null
++++ b/drivers/gistre/gistre_card/mfrc522_driver.c
+@@ -0,0 +1,179 @@
++#include "mfrc522_driver.h"
++
++#include <linux/errno.h>
++#include <linux/slab.h>
++#include <linux/uaccess.h>
++
++#include "commands/command.h"
++
++static int major;
++static struct mfrc522_driver_dev *mfrc522_driver_dev;
++
++int mfrc522_driver_open(struct inode *inode, struct file *file)
++{
++	unsigned int i_major = imajor(inode);
++	unsigned int i_minor = iminor(inode);
++
++	if (i_major != major) {
++		LOG("open: invalid major, exiting", LOG_ERROR, LOG_ERROR);
++		return -EINVAL;
++	}
++
++	pr_debug("mfrc_open: major '%u', minor '%u'\n", i_major, i_minor);
++	file->private_data = mfrc522_driver_dev;
++
++	return 0;
++}
++
++int mfrc522_driver_release(struct inode *inode /* unused */,
++	struct file *file /* unused */) {
++
++	return 0;
++}
++
++ssize_t mfrc522_driver_read(struct file *file, char __user *buf,
++	size_t len, loff_t *off /* unused */) {
++	struct mfrc522_driver_dev *mfrc522_driver_dev;
++
++	mfrc522_driver_dev = file->private_data;
++
++	// check if data exists
++	if (!mfrc522_driver_dev->contains_data) {
++		LOG("read: no data to read from internal buffer",
++			LOG_WARN, mfrc522_driver_dev->log_level);
++		return 0;
++	}
++
++	// Copying our internal buffer (int *) into a string (char *)
++	char data[INTERNAL_BUFFER_SIZE + 1];
++
++	memset(data, 0, INTERNAL_BUFFER_SIZE + 1);
++	int i = 0;
++
++	while (i < INTERNAL_BUFFER_SIZE) {
++		data[i] = mfrc522_driver_dev->data[i];
++		i++;
++	}
++
++	// Flush internal buffer
++	if (copy_to_user(buf, data, INTERNAL_BUFFER_SIZE + 1)) {
++		LOG("read: failed to copy data to user",
++			LOG_ERROR, mfrc522_driver_dev->log_level);
++		return -EFAULT;
++	}
++
++	// Reset internal buffer
++	memset(mfrc522_driver_dev->data, 0, INTERNAL_BUFFER_SIZE + 1);
++	mfrc522_driver_dev->contains_data = false;
++
++	return INTERNAL_BUFFER_SIZE;
++}
++
++ssize_t mfrc522_driver_write(struct file *file, const char __user *user_buf,
++	size_t len, loff_t *off /* unused */) {
++	struct mfrc522_driver_dev *mfrc522_driver_dev;
++
++	mfrc522_driver_dev = file->private_data;
++
++	char buff[MAX_ACCEPTED_COMMAND_SIZE + 1];
++
++	memset(buff, 0, MAX_ACCEPTED_COMMAND_SIZE + 1);
++
++	if (copy_from_user(buff, user_buf, MAX_ACCEPTED_COMMAND_SIZE)) {
++		LOG("write: failed to copy data from user",
++			LOG_ERROR, mfrc522_driver_dev->log_level);
++		return -EFAULT;
++	}
++
++	struct command *command = parse_command(buff, mfrc522_driver_dev->log_level);
++
++	if (command == NULL)
++		return -EFAULT;
++
++	if (process_command(command, mfrc522_driver_dev) < 0)
++		return -EFAULT;
++
++	return len;
++}
++
++/*
++ *  Init & Exit
++ */
++
++static const struct file_operations mfrc_fops = {
++	.owner	= THIS_MODULE,
++	.read	= mfrc522_driver_read,
++	.write	= mfrc522_driver_write,
++	.open	= mfrc522_driver_open,
++	.release = mfrc522_driver_release
++	/* Only use the kernel's defaults */
++};
++
++__exit
++static void mfrc522_driver_exit(void)
++{
++
++	dev_t dev;
++
++	/* Unregister char device */
++	cdev_del(&mfrc522_driver_dev->cdev);
++
++	/* Free mfrc522_driver_dev structure */
++	kfree(mfrc522_driver_dev);
++	pr_debug("Freed struct mfrc522_driver_dev\n");
++
++	/* Release major */
++	dev = MKDEV(major, 0);
++	unregister_chrdev_region(dev, 1);
++	pr_debug("Released major %d\n", major);
++
++	LOG("Stopping driver support for MFRC_522 card", LOG_INFO, LOG_INFO);
++}
++
++__init
++static int mfrc522_driver_init(void)
++{
++	LOG("Hello, GISTRE card !", LOG_INFO, LOG_INFO);
++
++	dev_t dev;
++	int ret;
++	const char devname[] = "mfrc0";
++
++	/* Allocate major */
++	ret = alloc_chrdev_region(&dev, 0, 1, devname);
++	if (ret < 0)
++		return 1;
++	major = MAJOR(dev);
++	pr_info("Got major %d\n", major);
++
++	/* Allocate our device structure */
++	mfrc522_driver_dev = kmalloc(sizeof(*mfrc522_driver_dev), GFP_KERNEL);
++	if (!mfrc522_driver_dev) {
++		LOG("init: failed to allocate struct mfrc522_driver_dev",
++			LOG_ERROR, LOG_ERROR);
++		return -ENOMEM;
++	}
++	LOG("init: allocated struct mfrc522_driver_dev", LOG_INFO, LOG_INFO);
++
++	pr_debug("Allocated struct mfrc522_driver_dev\n");
++
++	// Enable error logs by default
++	mfrc522_driver_dev->log_level = LOG_ERROR;
++
++	/* Register char device */
++	mfrc522_driver_dev->cdev.owner = THIS_MODULE;
++	cdev_init(&mfrc522_driver_dev->cdev, &mfrc_fops);
++
++	ret = cdev_add(&mfrc522_driver_dev->cdev, dev, 1);
++	if (ret < 0) {
++		LOG("init: failed to add device", LOG_ERROR,
++			mfrc522_driver_dev->log_level);
++		return -ENOMEM;
++	}
++	// TODO: add major in print
++	LOG("init: device successfully initialized", LOG_INFO, LOG_INFO);
++	return 0;
++}
++
++module_init(mfrc522_driver_init);
++module_exit(mfrc522_driver_exit);
+diff --git a/drivers/gistre/gistre_card/mfrc522_driver.h b/drivers/gistre/gistre_card/mfrc522_driver.h
+new file mode 100644
+index 0000000..7a4ebca
+--- /dev/null
++++ b/drivers/gistre/gistre_card/mfrc522_driver.h
+@@ -0,0 +1,30 @@
++#ifndef MFRC522_DRIVER_H
++#define MFRC522_DRIVER_H
++
++#define MAX_ACCEPTED_COMMAND_SIZE 100
++#define INTERNAL_BUFFER_SIZE 25
++
++#include <linux/kernel.h>
++#include <linux/module.h>
++#include <linux/fs.h>
++#include <linux/cdev.h>
++
++MODULE_AUTHOR("antoine.sole, thomas.crambert");
++MODULE_LICENSE("GPL v2");
++
++struct mfrc522_driver_dev {
++	struct cdev cdev;
++	bool contains_data;
++	unsigned int log_level;
++	unsigned int data[INTERNAL_BUFFER_SIZE + 1];
++};
++
++int mfrc522_driver_open(struct inode *inode, struct file *file);
++int mfrc522_driver_release(struct inode *inode /* unused */,
++				struct file *file /* unused */);
++ssize_t mfrc522_driver_read(struct file *file, char __user *buf,
++				size_t len, loff_t *off /* unused */);
++ssize_t mfrc522_driver_write(struct file *file, const char __user *buf,
++				 size_t len, loff_t *off /* unused */);
++
++#endif
+-- 
+2.31.1
+
