@@ -60,7 +60,8 @@ struct command *parse_debug(const char *buffer, int log_level)
  * @param buffer: the buffer containing the command
  * @return an enum with value corresponding to the kind of the debug operation to perform
  */
-static enum DEBUG_OPE set_log(char *buffer, int log_level) {
+static enum DEBUG_OPE set_log(char *buffer, int log_level)
+{
 	 if (strcmp(buffer, "on") == 0) {
 		  LOG("debug: enabling log levels...", LOG_EXTRA, log_level);
 		  return DEBUG_ON;
@@ -95,7 +96,8 @@ static enum LOG_LEVEL find_log_level(char *level, int log_level)
 of the device.
  * @return a negative integer if an error occured, zero otherwise.
  */
-int process_debug(struct command *command, struct regmap *regmap, struct mfrc522_driver_dev *mfrc522_driver_dev) {
+int process_debug(struct command *command, struct regmap *regmap, struct mfrc522_driver_dev *mfrc522_driver_dev)
+{
 	 int current_level = mfrc522_driver_dev->log_level;
 	 enum DEBUG_OPE set = set_log(command->args[0], mfrc522_driver_dev->log_level);
 	 if (set == DEBUG_UNKOWN)
@@ -108,8 +110,7 @@ int process_debug(struct command *command, struct regmap *regmap, struct mfrc522
 		  if (set) {
 				mfrc522_driver_dev->log_level = ENABLE_ALL_LOGS;
 				LOG("debug: enabling all logs", LOG_INFO, mfrc522_driver_dev->log_level);
-		  }
-		  else {
+		  } else {
 				LOG("debug: disabling all logs", LOG_INFO, mfrc522_driver_dev->log_level);
 				mfrc522_driver_dev->log_level = 0;
 		  }

@@ -50,7 +50,8 @@ int flush_fifo(struct regmap *regmap, int log_level)
 	 return 0;
 }
 
-struct command *get_args(struct command *command, const char *buffer, int nb_args, const char *command_name) {
+struct command *get_args(struct command *command, const char *buffer, int nb_args, const char *command_name)
+{
 	 char *new_buff = astrcpy(buffer);
 	 char *tok = NULL;
 	 char *sep = ":";

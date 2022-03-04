@@ -143,14 +143,8 @@ static int mfrc522_driver_init(void)
 	ret = alloc_chrdev_region(&dev, 0, 1, devname);
 	if (ret < 0)
 		return 1;
-<<<<<<< HEAD
-	 major = MAJOR(dev);
-	 pr_info("Got major %d\n", major);
-=======
-
 	major = MAJOR(dev);
 	pr_info("Got major %d\n", major);
->>>>>>> master
 
 	/* Allocate our device structure */
 	mfrc522_driver_dev = kmalloc(sizeof(*mfrc522_driver_dev), GFP_KERNEL);
