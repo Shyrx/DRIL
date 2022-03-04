@@ -1,5 +1,6 @@
 obj-y += \
 	command.o \
-	parser.o  \
-	process.o
-
+	utils.o  \
+	mem_read.o \
+	mem_write.o \
+	debug.o
