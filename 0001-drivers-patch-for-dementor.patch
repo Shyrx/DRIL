@@ -1,40 +1,65 @@
+From 3172750f815cc9e7654cbf572d9ec14e8ef63061 Mon Sep 17 00:00:00 2001
+From: "thomas.crambert" <thomas.crambert@epita.fr>
+Date: Fri, 4 Mar 2022 22:15:41 +0100
+Subject: [PATCH] drivers: patch for dementor
+
+---
+ drivers/gistre/Kconfig                        |   4 +-
+ drivers/gistre/Makefile                       |   5 +
+ drivers/gistre/gistre_card/Kconfig            |   6 +
+ drivers/gistre/gistre_card/Makefile           |   5 +
+ drivers/gistre/gistre_card/commands/Makefile  |   6 +
+ drivers/gistre/gistre_card/commands/command.c | 102 ++++++++++
+ drivers/gistre/gistre_card/commands/command.h |  63 ++++++
+ drivers/gistre/gistre_card/commands/debug.c   | 166 ++++++++++++++++
+ .../gistre/gistre_card/commands/mem_read.c    |  65 +++++++
+ .../gistre/gistre_card/commands/mem_write.c   |  82 ++++++++
+ drivers/gistre/gistre_card/commands/utils.c   |  84 ++++++++
+ drivers/gistre/gistre_card/commands/utils.h   |  14 ++
+ drivers/gistre/gistre_card/mfrc522_driver.c   | 179 ++++++++++++++++++
+ drivers/gistre/gistre_card/mfrc522_driver.h   |  30 +++
+ 14 files changed, 809 insertions(+), 2 deletions(-)
+ create mode 100644 drivers/gistre/gistre_card/Kconfig
+ create mode 100644 drivers/gistre/gistre_card/Makefile
+ create mode 100644 drivers/gistre/gistre_card/commands/Makefile
+ create mode 100644 drivers/gistre/gistre_card/commands/command.c
+ create mode 100644 drivers/gistre/gistre_card/commands/command.h
+ create mode 100644 drivers/gistre/gistre_card/commands/debug.c
+ create mode 100644 drivers/gistre/gistre_card/commands/mem_read.c
+ create mode 100644 drivers/gistre/gistre_card/commands/mem_write.c
+ create mode 100644 drivers/gistre/gistre_card/commands/utils.c
+ create mode 100644 drivers/gistre/gistre_card/commands/utils.h
+ create mode 100644 drivers/gistre/gistre_card/mfrc522_driver.c
+ create mode 100644 drivers/gistre/gistre_card/mfrc522_driver.h
+
 diff --git a/drivers/gistre/Kconfig b/drivers/gistre/Kconfig
-new file mode 100644
-index 0000000..2776682
---- /dev/null
+index d727549..2776682 100644
+--- a/drivers/gistre/Kconfig
 +++ b/drivers/gistre/Kconfig
-@@ -0,0 +1,15 @@
-+#
+@@ -1,8 +1,8 @@
+ #
+-# GISTRE drivers
 +# Should describe what the driver can do
-+#
-+
+ #
+ 
+-menu "GISTRE drivers support"
 +menu "MFRC522 GISTRE drivers support"
-+
-+config MFRC522_EMU
-+	bool "GISTRE MFRC522 emulator"
-+	help
-+      Emulates a single MFRC522 NFC card reader device.
-+      This device usually uses SPI, but the emulation uses the regmap
-+      API and hides it behind a fake I2C device; which should not
-+      matter in any way when communicating with it.
-+
-+endmenu
+ 
+ config MFRC522_EMU
+ 	bool "GISTRE MFRC522 emulator"
 diff --git a/drivers/gistre/Makefile b/drivers/gistre/Makefile
-new file mode 100644
-index 0000000..cbe7e6b
---- /dev/null
+index fefea26..79ff174 100644
+--- a/drivers/gistre/Makefile
 +++ b/drivers/gistre/Makefile
-@@ -0,0 +1,10 @@
-+### Code for the GISTRE at EPITA
-+
-+obj-$(CONFIG_MFRC522_EMU)        += \
-+	mfrc522_emu_internals.o \
-+	mfrc522_emu.o \
-+	mfrc522_emu_drv.o
+@@ -4,3 +4,8 @@ obj-$(CONFIG_MFRC522_EMU)        += \
+ 	mfrc522_emu_internals.o \
+ 	mfrc522_emu.o \
+ 	mfrc522_emu_drv.o
 +
 +# Add the directory where our builtin module is
 +obj-y += \
 +	gistre_card/
++
 diff --git a/drivers/gistre/gistre_card/Kconfig b/drivers/gistre/gistre_card/Kconfig
 new file mode 100644
 index 0000000..781748c
@@ -909,3 +934,6 @@ index 0000000..7a4ebca
 +				 size_t len, loff_t *off /* unused */);
 +
 +#endif
+-- 
+2.31.1
+
