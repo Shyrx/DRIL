@@ -75,8 +75,8 @@ void dump_trace(const unsigned int *data, bool reading, int log_level)
 	 while (i < 5) {
 		  int j = 0;
 		  while (j < 5) {
-		    printk(KERN_CONT "%02x%s", data[i * 5 + j], (j < 4 ? " " : "\n"));
-		    j++;
+			 printk(KERN_CONT "%02x%s", data[i * 5 + j], (j < 4 ? " " : "\n"));
+			 j++;
 		  }
 		  printk(KERN_CONT "\n");
 		  i++;

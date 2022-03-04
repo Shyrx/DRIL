@@ -127,41 +127,40 @@ int process_debug(struct command *command, struct regmap *regmap, struct mfrc522
 {
 	 int current_level = mfrc522_driver_dev->log_level;
 	 enum DEBUG_OPE debug_op = get_debug_op(command->args[0], mfrc522_driver_dev->log_level);
-     switch (debug_op)
-     {
-     case DEBUG_ON:
-         if (command->nb_arg > 1)
-             break;
-         mfrc522_driver_dev->log_level = ENABLE_ALL_LOGS;
-         LOG("debug: enabling all logs", LOG_INFO, mfrc522_driver_dev->log_level);
-         return 0;
-     case DEBUG_OFF:
-         if (command->nb_arg != 1)
-             break;
-         LOG("debug: disabling all logs", LOG_INFO, mfrc522_driver_dev->log_level);
-         mfrc522_driver_dev->log_level = 0;
-         return 0;
-     case DEBUG_STATUS:
-         print_enabled_log_levels(mfrc522_driver_dev->log_level);
-         return 0;
-     default:
-         return -1;
-     }
+	  switch (debug_op) {
+	  case DEBUG_ON:
+			if (command->nb_arg > 1)
+				 break;
+			mfrc522_driver_dev->log_level = ENABLE_ALL_LOGS;
+			LOG("debug: enabling all logs", LOG_INFO, mfrc522_driver_dev->log_level);
+			return 0;
+	  case DEBUG_OFF:
+			if (command->nb_arg != 1)
+				 break;
+			LOG("debug: disabling all logs", LOG_INFO, mfrc522_driver_dev->log_level);
+			mfrc522_driver_dev->log_level = 0;
+			return 0;
+	  case DEBUG_STATUS:
+			print_enabled_log_levels(mfrc522_driver_dev->log_level);
+			return 0;
+	  default:
+			return -1;
+	  }
 
-     int i = 1;
-     while (i < command->nb_arg) {
-         enum LOG_LEVEL log_level = find_log_level(*(command->args + i), mfrc522_driver_dev->log_level);
+	  int i = 1;
+	  while (i < command->nb_arg) {
+			enum LOG_LEVEL log_level = find_log_level(*(command->args + i), mfrc522_driver_dev->log_level);
 
-         if (log_level == LOG_NOT_FOUND)
-             return -1;
+			if (log_level == LOG_NOT_FOUND)
+				 return -1;
 
-         if (debug_op == DEBUG_ON)
-             current_level |= log_level;
-         else
-             current_level &= ~log_level;
-         i++;
-     }
-     LOG("debug: log mode updated successfully", LOG_EXTRA, mfrc522_driver_dev->log_level);
-     mfrc522_driver_dev->log_level = current_level;
-     return 0;
+			if (debug_op == DEBUG_ON)
+				 current_level |= log_level;
+			else
+				 current_level &= ~log_level;
+			i++;
+	  }
+	  LOG("debug: log mode updated successfully", LOG_EXTRA, mfrc522_driver_dev->log_level);
+	  mfrc522_driver_dev->log_level = current_level;
+	  return 0;
 }
