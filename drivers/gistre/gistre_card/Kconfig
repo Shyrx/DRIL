@@ -1,6 +1,12 @@
 config MFRC_522_DRIVER
-       bool "enable driver for MFRC_522 Card"
-       depends on MFRC522_EMU
-       help
-       # TODO
-        "Description of what our module do"
+        bool "enable driver for MFRC_522 Card"
+        depends on MFRC522_EMU
+        help
+      This module is used to communicate with a mfrc522 card.
+      It enables reading and writing from/into the card.
+      To do so write `mem_read` or `mem_write:<len of data>:<data>` into this module.
+      You can read/write a maximum of 25 octets by command.
+      You can enable different level of logging using `debug:<on/off>:<[info|trace|warn|extra|error]+>`.
+      You can also enable/disable all level of logging using `debug:<on/off>`
+      and see currently enable logging level with `debug:status`.
+
