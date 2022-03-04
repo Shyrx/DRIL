@@ -85,7 +85,7 @@ ssize_t mfrc522_driver_write(struct file *file, const char __user *user_buf,
 		return -EFAULT;
 	}
 
-	struct command *command = parse_command(buff);
+	struct command *command = parse_command(buff, mfrc522_driver_dev->log_level);
 
 	if (command == NULL)
 		return -EFAULT;

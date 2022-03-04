@@ -15,7 +15,6 @@ char *astrcpy(const char *buffer)
 	return new;
 }
 
-// TODO Docu
 int count_separator_occurence(const char *buffer, const char separator)
 {
 	int i = 0;
@@ -63,4 +62,23 @@ struct command *get_args(struct command *command, const char *buffer, int nb_arg
 
 	 kfree(new_buff);
 	 return command;
+}
+
+void dump_trace(const unsigned int *data, bool reading, int log_level)
+{
+	 if (!(log_level & LOG_TRACE))
+		  return;
+	 LOG("Dumping trace:", LOG_TRACE, log_level);
+	 printk(KERN_CONT "<%s>\n", reading ? "RD" : "WR");
+	 int i = 0;
+
+	 while (i < 5) {
+		  int j = 0;
+		  while (j < 5) {
+			 printk(KERN_CONT "%02x%s", data[i * 5 + j], (j < 4 ? " " : ""));
+			 j++;
+		  }
+		  printk(KERN_CONT "\n");
+		  i++;
+	 }
 }
