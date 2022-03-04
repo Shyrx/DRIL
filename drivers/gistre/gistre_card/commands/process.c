@@ -204,6 +204,7 @@ static ssize_t process_debug(struct command *command, struct regmap *regmap /* u
         else {
             current_level &= ~log_level;
         }
+        i++;
     }
 
     LOG("debug: log mode updated successfully", LOG_EXTRA, mfrc_dev->debug_level);

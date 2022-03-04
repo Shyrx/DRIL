@@ -169,7 +169,7 @@ static int mfrc_init(void) {
 		pr_debug("Allocated struct mfrc_dev\n");
 	}
 
-    mfrc_dev->debug_level = (LOG_ERROR | LOG_EXTRA | LOG_WARN | LOG_INFO | LOG_TRACE);
+    mfrc_dev->debug_level = (LOG_ERROR);
 
 	/* Register char device */
 	mfrc_dev->cdev.owner = THIS_MODULE;
