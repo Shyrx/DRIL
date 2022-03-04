@@ -4,7 +4,7 @@
 #include "utils.h"
 
 #define DEBUG_NAME "debug"
-
+#define ENABLE_ALL_LOGS (LOG_ERROR | LOG_WARN | LOG_EXTRA | LOG_TRACE | LOG_INFO)
 static const char* jump_debug_to_string[] = {
 [LOG_INFO] = "info",
 [LOG_TRACE] = "trace",
@@ -74,7 +74,7 @@ static enum LOG_LEVEL find_log_level(char *level, int log_level)
     int i = 1;
     // TODO ugly, should be changed
     while (i < LOG_NOT_FOUND && strcmp(level, jump_debug_to_string[i]) != 0) {
-        i *= 2;
+        i <<= 1;
     }
 
     if (i == LOG_NOT_FOUND) {
@@ -96,7 +96,22 @@ int process_debug(struct command *command, struct regmap *regmap, struct mfrc522
     int set = set_log(command->args[0], mfrc522_driver_dev->log_level);
     if (set == -1)
         return -1;
-
+    else if (set == 2) {
+        // TODO
+        // print_currently_enabled_logs();
+        return 0;
+    }
+    if (command->nb_arg == 1) {
+        if (set) {
+            mfrc522_driver_dev->log_level = ENABLE_ALL_LOGS;
+            LOG("debug: enabling all logs", LOG_INFO, mfrc522_driver_dev->log_level);
+        }
+        else {
+            LOG("debug: disabling all logs", LOG_INFO, mfrc522_driver_dev->log_level);
+            mfrc522_driver_dev->log_level = 0;
+        }
+        return 0;
+    }
     int i = 1;
     while (i < command->nb_arg) {
         enum LOG_LEVEL log_level = find_log_level(*(command->args + i), mfrc522_driver_dev->log_level);
