@@ -59,21 +59,21 @@ of the device.
  */
 static ssize_t process_write(struct command *command, struct regmap *regmap, struct mfrc_dev *mfrc_dev)
 {
-    LOG("write: trying to write on card", LOG_EXTRA, mfrc_dev->debug_level);
+    LOG("write: trying to write on card", LOG_EXTRA, mfrc_dev->log_level);
     int data_size;
-    if ((data_size = check_arg_size(command, mfrc_dev->debug_level)) < 0) {
-        LOG("write: check on arguments failed", LOG_ERROR, mfrc_dev->debug_level)
+    if ((data_size = check_arg_size(command, mfrc_dev->log_level)) < 0) {
+        LOG("write: check on arguments failed", LOG_ERROR, mfrc_dev->log_level)
         return -1;
     }
     if (data_size > INTERNAL_BUFFER_SIZE) {
-        LOG("write: data too large, truncating", LOG_EXTRA, mfrc_dev->debug_level);
+        LOG("write: data too large, truncating", LOG_EXTRA, mfrc_dev->log_level);
         data_size = INTERNAL_BUFFER_SIZE;
     }
 
     // to flush all the data
     if (regmap_write(regmap, MFRC522_FIFOLEVELREG, 0))
     {
-        LOG("write: couldn't flush card, aborting", LOG_ERROR, mfrc_dev->debug_level);
+        LOG("write: couldn't flush card, aborting", LOG_ERROR, mfrc_dev->log_level);
         return -1;
     }
 
@@ -82,23 +82,23 @@ static ssize_t process_write(struct command *command, struct regmap *regmap, str
         int err = regmap_write(regmap, MFRC522_FIFODATAREG, *(*(command->args + 1) + i));
         if (err)
         {
-            LOG("write: failed to write on card, aborting", LOG_ERROR, mfrc_dev->debug_level);
+            LOG("write: failed to write on card, aborting", LOG_ERROR, mfrc_dev->log_level);
             return -1;
         }
         i++;
     }
-    LOG("write: finished to write user content", LOG_EXTRA, mfrc_dev->debug_level);
+    LOG("write: finished to write user content", LOG_EXTRA, mfrc_dev->log_level);
 
     while (i < INTERNAL_BUFFER_SIZE) {
         int err = regmap_write(regmap, MFRC522_FIFODATAREG, 0);
         if (err)
         {
-            LOG("write: failed to fill FIFO with zeroes", LOG_ERROR, mfrc_dev->debug_level)
+            LOG("write: failed to fill FIFO with zeroes", LOG_ERROR, mfrc_dev->log_level)
             return -1;
         }
         i++;
     }
-    LOG("write: operation successful", LOG_EXTRA, mfrc_dev->debug_level);
+    LOG("write: operation successful", LOG_EXTRA, mfrc_dev->log_level);
     return INTERNAL_BUFFER_SIZE;
 }
 
@@ -111,17 +111,17 @@ of the device.
  */
 static ssize_t process_read(struct command *command, struct regmap *regmap, struct mfrc_dev *mfrc_dev)
 {
-    LOG("read: trying to read from card...", LOG_EXTRA, mfrc_dev->debug_level)
+    LOG("read: trying to read from card...", LOG_EXTRA, mfrc_dev->log_level)
     memset(mfrc_dev->data, 0, INTERNAL_BUFFER_SIZE + 1);
     unsigned int fifo_size = 0;
     if (regmap_read(regmap, MFRC522_FIFOLEVELREG, &fifo_size))
     {
-        LOG("read: Failed to check fifo_size", LOG_ERROR, mfrc_dev->debug_level)
+        LOG("read: Failed to check fifo_size", LOG_ERROR, mfrc_dev->log_level)
         return -1;
     }
     if (fifo_size == 0)
     {
-        LOG("read: no data to read from card", LOG_WARN, mfrc_dev->debug_level)
+        LOG("read: no data to read from card", LOG_WARN, mfrc_dev->log_level)
         return INTERNAL_BUFFER_SIZE;
     }
     pr_info("Read: Card buffer size is %d\n", fifo_size);
@@ -132,17 +132,17 @@ static ssize_t process_read(struct command *command, struct regmap *regmap, stru
         pr_info("Read: read '%c-%d'\n", *(mfrc_dev->data + i), *(mfrc_dev->data + i));
         if (err)
         {
-            LOG("read: failed to read value from card", LOG_ERROR, mfrc_dev->debug_level)
+            LOG("read: failed to read value from card", LOG_ERROR, mfrc_dev->log_level)
             return -1;
         }
         if (*(mfrc_dev->data + i) == 0)
         {
-            LOG("read: null byte received", LOG_WARN, mfrc_dev->debug_level);
+            LOG("read: null byte received", LOG_WARN, mfrc_dev->log_level);
             break;
         }
         i++;
     }
-    LOG("read: operation successful", LOG_EXTRA, mfrc_dev->debug_level);
+    LOG("read: operation successful", LOG_EXTRA, mfrc_dev->log_level);
     mfrc_dev->contains_data = true;
     return INTERNAL_BUFFER_SIZE;
 }
@@ -185,14 +185,14 @@ of the device.
  * @return a negative integer if an error occured, zero otherwise.
  */
 static ssize_t process_debug(struct command *command, struct regmap *regmap /* unused */, struct mfrc_dev *mfrc_dev) {
-    int current_level = mfrc_dev->debug_level;
-    int set = set_log(command->args[0], mfrc_dev->debug_level);
+    int current_level = mfrc_dev->log_level;
+    int set = set_log(command->args[0], mfrc_dev->log_level);
     if (set == -1)
         return -1;
 
     int i = 1;
     while (i < command->nb_arg) {
-        enum LOG_LEVEL log_level = find_log_level(*(command->args + i), mfrc_dev->debug_level);
+        enum LOG_LEVEL log_level = find_log_level(*(command->args + i), mfrc_dev->log_level);
 
         if (log_level == LOG_NOT_FOUND) {
             return -1;
@@ -207,8 +207,8 @@ static ssize_t process_debug(struct command *command, struct regmap *regmap /* u
         i++;
     }
 
-    LOG("debug: log mode updated successfully", LOG_EXTRA, mfrc_dev->debug_level);
-    mfrc_dev->debug_level = current_level;
+    LOG("debug: log mode updated successfully", LOG_EXTRA, mfrc_dev->log_level);
+    mfrc_dev->log_level = current_level;
     return 0;
 }
 
