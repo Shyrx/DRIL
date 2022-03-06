@@ -15,18 +15,32 @@ int mfrc522_driver_open(struct inode *inode, struct file *file)
 	unsigned int i_minor = iminor(inode);
 
 	if (i_major != major) {
-		LOG("open: invalid major, got %d but expected %d, exiting", LOG_ERROR, LOG_ERROR, i_major, major);
+		LOG("open: invalid major, got %d but expected %d, exiting",
+			LOG_ERROR, LOG_ERROR, i_major, major);
 		return -EINVAL;
 	}
 
-	LOG("open: major '%u', minor '%u'\n", LOG_EXTRA, LOG_EXTRA, i_major, i_minor);
+	LOG("open: major '%u', minor '%u'\n", LOG_EXTRA,
+		mfrc522_driver_dev->log_level, i_major, i_minor);
+
 	file->private_data = mfrc522_driver_dev;
 
 	return 0;
 }
 
-int mfrc522_driver_release(struct inode *inode /* unused */,
+int mfrc522_driver_release(struct inode *inode,
 	struct file *file /* unused */) {
+	unsigned int i_major = imajor(inode);
+	unsigned int i_minor = iminor(inode);
+
+	if (i_major != major) {
+		LOG("release: invalid major, got %d but expected %d, exiting",
+			LOG_ERROR, LOG_ERROR, i_major, major);
+		return -EINVAL;
+	}
+
+	LOG("release: major '%u', minor '%u'\n", LOG_EXTRA,
+		mfrc522_driver_dev->log_level, i_major, i_minor);
 
 	return 0;
 }
