@@ -27,13 +27,14 @@ LOG_NOT_FOUND = 32,
 };
 
 const char *enum_log_to_string_message(int log_level);
+const char *format_message(const char *fmt, ...);
 
-#define LOG(message, level_required, log_level)	\
+#define LOG(message, level_required, log_level, ...) \
 	do { \
 		if (log_level & level_required) { \
 			 printk(KERN_CONT "%s%s\n", \
 					enum_log_to_string_message(level_required), \
-					message); \
+					format_message(message, ##__VA_ARGS__)); \
 		} \
 	} while (0)
 

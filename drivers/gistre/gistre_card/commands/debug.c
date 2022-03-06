@@ -38,6 +38,50 @@ const char *enum_log_to_string_message(int log_level)
 	}
 }
 
+// Can't use LOG in this function as it is used in LOG
+// FIXME Docu
+const char *format_message(const char *fmt, ...)
+{
+    va_list ap;
+    int size = 100;
+    char *result;
+    int n;
+
+    result = kmalloc(sizeof(char) * size, GFP_KERNEL);
+    if (!result) {
+        pr_err("log: not enough memory for logging message");
+        return NULL;
+    }
+
+    while (1) {
+        va_start(ap, fmt);
+        n = vsnprintf(result, size, fmt, ap);
+        va_end(ap);
+
+        if (n < 0)
+            return NULL;
+
+        if (n < size)
+            return result;
+
+        // There was not enough size in the buffer so we extend it
+        size += 100;
+        char *tmp;
+
+        tmp = kmalloc(sizeof(char) * size, GFP_KERNEL);
+        if (!tmp) {
+            pr_err("log: not enough memory for logging message");
+            kfree(result);
+            return NULL;
+        }
+
+        memcpy(tmp, result, size - 100);
+        kfree(result);
+        result = tmp;
+    }
+
+}
+
 /**
  * @param buffer: the buffer containing the data to process
  * @return an allocated struct of kind COMMAND_DEBUG

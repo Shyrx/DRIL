@@ -60,7 +60,7 @@ static const map_parse_command jump_parse[] = {
  */
 struct command *parse_command(const char *buffer, int log_level)
 {
-	pr_info("Parsing command: %s\n", buffer);
+	LOG("parse: parsing command: '%s'", LOG_INFO, log_level, buffer);
 	enum COMMAND_TYPE command_type = 0;
 	// kind of ugly, move into dedicated function ?
 	while (command_type != COMMAND_NOT_FOUND
