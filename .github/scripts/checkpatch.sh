@@ -4,7 +4,11 @@ echo "###### Checking coding style using Checkpatch #####"
 
 # ../../drivers/gistre/gistre_card/commands/*.(c|h)
 
-CHECKPATCH=$(find ../../drivers/gistre/gistre_card -name '*.[ch]' -exec ../../resources/checkpatch.pl --no-tree -f {} 2>/dev/null \;)
+FILES_TO_CHECK=$(find ./drivers/gistre/gistre_card -name '*.[ch]')
+echo "Checking:
+$FILES_TO_CHECK"
+
+CHECKPATCH=$(find ./drivers/gistre/gistre_card -name '*.[ch]' -exec ./resources/checkpatch.pl --no-tree -f {} 2>/dev/null \;)
 
 echo '
 

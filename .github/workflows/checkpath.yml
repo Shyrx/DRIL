@@ -16,4 +16,5 @@ jobs:
       - uses: actions/checkout@v2
       - name: Checkpath
         run: |
-          ./.github/scripts/checkpath.sh
+          ls ./resources
+          ./.github/scripts/checkpatch.sh
