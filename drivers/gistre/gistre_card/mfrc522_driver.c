@@ -103,8 +103,12 @@ ssize_t mfrc522_driver_write(struct file *file, const char __user *user_buf,
 	if (command == NULL)
 		return -EFAULT;
 
-	if (process_command(command, mfrc522_driver_dev) < 0)
+	int res = process_command(command, mfrc522_driver_dev);
+
+	command_free(command);
+	if ( res < 0)
 		return -EFAULT;
+
 
 	return len;
 }
