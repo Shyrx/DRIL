@@ -3,4 +3,5 @@ obj-y += \
 	utils.o  \
 	mem_read.o \
 	mem_write.o \
-	debug.o
+	debug.o \
+	gen_rand_id.o
