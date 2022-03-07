@@ -49,7 +49,7 @@ const char *format_message(const char *fmt, ...)
 
 	result = kmalloc_array(size, sizeof(char), GFP_KERNEL);
 	if (!result)
-		return NULL;
+		return "Error allocating size";
 
 	while (1) {
 		va_start(ap, fmt);
@@ -57,7 +57,7 @@ const char *format_message(const char *fmt, ...)
 		va_end(ap);
 
 		if (n < 0)
-			return NULL;
+				return "Error formatting string";
 
 		if (n < size)
 			return result;
@@ -69,7 +69,7 @@ const char *format_message(const char *fmt, ...)
 		tmp = kmalloc_array(size, sizeof(char), GFP_KERNEL);
 		if (!tmp) {
 			kfree(result);
-			return NULL;
+			return "Error allocating size";
 		}
 
 		memcpy(tmp, result, size - 100);

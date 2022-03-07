@@ -1,5 +1,4 @@
 #include "utils.h"
-#include "command.h"
 
 #include <linux/slab.h>
 #include <linux/string.h>
