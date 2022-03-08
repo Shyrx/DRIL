@@ -7,3 +7,4 @@ result
 *.o
 *mfrc522.h
 *.order
+!*resources/*

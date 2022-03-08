@@ -38,6 +38,7 @@ int process_write(const struct command *command, const struct regmap *regmap,
 	LOG("write: trying to write on card", LOG_EXTRA,
 		mfrc522_driver_dev->log_level);
 	int data_size = check_arg_size(command, mfrc522_driver_dev->log_level);
+	int given_size = strlen(command->args[1]);
 
 	if (data_size < 0) {
 		LOG("write: check on arguments failed", LOG_ERROR,
@@ -48,6 +49,11 @@ int process_write(const struct command *command, const struct regmap *regmap,
 		LOG("write: data too large, truncating", LOG_EXTRA,
 			mfrc522_driver_dev->log_level);
 		data_size = INTERNAL_BUFFER_SIZE;
+	}
+	if (data_size > given_size) {
+		LOG("write: asking to write %d but only %d were given, filling with zeroes",
+			LOG_EXTRA, mfrc522_driver_dev->log_level, data_size, given_size);
+		data_size = given_size;
 	}
 
 	if (flush_fifo(regmap, mfrc522_driver_dev->log_level) < 0)
