@@ -36,18 +36,3 @@ If the toggle is not supported  or a debug level is not found, does nothing.
 - Can we rename the `debug` command to `log` to make more sense with our code and logic ?
 
 # Misc
-
-# ROADMAP
-
-- [x] Clean code
-- [x] Proper log everywhere
-- [x] Tests by hand read/write more
-
-- [1] Write README
-- [2] Apply checkpath
-- [3] Documents all functions
-- [4] Add debug:status
-- [5] Implement random command
-- [6] Logs with format string (if possible)
-- [7] Add color on debug (if possible)
-
