@@ -6,3 +6,4 @@ result
 *emu*
 *.o
 *mfrc522.h
+*.order

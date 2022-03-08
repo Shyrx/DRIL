@@ -15,18 +15,32 @@ int mfrc522_driver_open(struct inode *inode, struct file *file)
 	unsigned int i_minor = iminor(inode);
 
 	if (i_major != major) {
-		LOG("open: invalid major, exiting", LOG_ERROR, LOG_ERROR);
+		LOG("open: invalid major, got %d but expected %d, exiting",
+			LOG_ERROR, LOG_ERROR, i_major, major);
 		return -EINVAL;
 	}
 
-	pr_debug("mfrc_open: major '%u', minor '%u'\n", i_major, i_minor);
+	LOG("open: major '%u', minor '%u'\n", LOG_EXTRA,
+		mfrc522_driver_dev->log_level, i_major, i_minor);
+
 	file->private_data = mfrc522_driver_dev;
 
 	return 0;
 }
 
-int mfrc522_driver_release(struct inode *inode /* unused */,
+int mfrc522_driver_release(struct inode *inode,
 	struct file *file /* unused */) {
+	unsigned int i_major = imajor(inode);
+	unsigned int i_minor = iminor(inode);
+
+	if (i_major != major) {
+		LOG("release: invalid major, got %d but expected %d, exiting",
+			LOG_ERROR, LOG_ERROR, i_major, major);
+		return -EINVAL;
+	}
+
+	LOG("release: major '%u', minor '%u'\n", LOG_EXTRA,
+		mfrc522_driver_dev->log_level, i_major, i_minor);
 
 	return 0;
 }
@@ -46,10 +60,9 @@ ssize_t mfrc522_driver_read(struct file *file, char __user *buf,
 
 	// Copying our internal buffer (int *) into a string (char *)
 	char data[INTERNAL_BUFFER_SIZE + 1];
-
-	memset(data, 0, INTERNAL_BUFFER_SIZE + 1);
 	int i = 0;
 
+	memset(data, 0, INTERNAL_BUFFER_SIZE + 1);
 	while (i < INTERNAL_BUFFER_SIZE) {
 		data[i] = mfrc522_driver_dev->data[i];
 		i++;
@@ -114,18 +127,18 @@ static void mfrc522_driver_exit(void)
 {
 
 	dev_t dev;
+	int log_level = mfrc522_driver_dev->log_level;
 
 	/* Unregister char device */
 	cdev_del(&mfrc522_driver_dev->cdev);
 
 	/* Free mfrc522_driver_dev structure */
 	kfree(mfrc522_driver_dev);
-	pr_debug("Freed struct mfrc522_driver_dev\n");
-
+	LOG("Freed struct mfrc522_driver_dev", LOG_EXTRA, log_level);
 	/* Release major */
 	dev = MKDEV(major, 0);
 	unregister_chrdev_region(dev, 1);
-	pr_debug("Released major %d\n", major);
+	LOG("Released major %d", LOG_EXTRA, log_level, major);
 
 	LOG("Stopping driver support for MFRC_522 card", LOG_INFO, LOG_INFO);
 }
@@ -134,7 +147,6 @@ __init
 static int mfrc522_driver_init(void)
 {
 	LOG("Hello, GISTRE card !", LOG_INFO, LOG_INFO);
-
 	dev_t dev;
 	int ret;
 	const char devname[] = "mfrc0";
@@ -144,7 +156,7 @@ static int mfrc522_driver_init(void)
 	if (ret < 0)
 		return 1;
 	major = MAJOR(dev);
-	pr_info("Got major %d\n", major);
+	LOG("Got major %d for driver support for MRFC_522 card", LOG_INFO, LOG_INFO, major);
 
 	/* Allocate our device structure */
 	mfrc522_driver_dev = kmalloc(sizeof(*mfrc522_driver_dev), GFP_KERNEL);
@@ -153,9 +165,6 @@ static int mfrc522_driver_init(void)
 			LOG_ERROR, LOG_ERROR);
 		return -ENOMEM;
 	}
-	LOG("init: allocated struct mfrc522_driver_dev", LOG_INFO, LOG_INFO);
-
-	pr_debug("Allocated struct mfrc522_driver_dev\n");
 
 	// Enable error logs by default
 	mfrc522_driver_dev->log_level = LOG_ERROR;
@@ -170,8 +179,8 @@ static int mfrc522_driver_init(void)
 			mfrc522_driver_dev->log_level);
 		return -ENOMEM;
 	}
-	// TODO: add major in print
 	LOG("init: device successfully initialized", LOG_INFO, LOG_INFO);
+
 	return 0;
 }
 
