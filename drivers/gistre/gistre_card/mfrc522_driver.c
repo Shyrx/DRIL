@@ -3,10 +3,11 @@
 #include <linux/errno.h>
 #include <linux/slab.h>
 #include <linux/uaccess.h>
+#include <linux/device.h>
 
 #include "commands/command.h"
 
-#define MAX_DEVICES = 1
+#define MAX_DEVICES 1
 
 static int major;
 static struct mfrc522_driver_dev *mfrc522_driver_devs[MAX_DEVICES];
@@ -54,10 +55,12 @@ int mfrc522_driver_release(struct inode *inode,
 ssize_t mfrc522_driver_read(struct file *file, char __user *buf,
 	size_t len, loff_t *off /* unused */) {
 	struct mfrc522_driver_dev *mfrc522_driver_dev;
-	struct mfrc522_driver_data *data;
+	struct mfrc522_driver_data *driver_data;
+	char data[INTERNAL_BUFFER_SIZE + 1];
+	int i = 0;
 
 	mfrc522_driver_dev = file->private_data;
-	data = mfrc522_driver_dev->dev->driver_data;
+	driver_data = mfrc522_driver_dev->dev->driver_data;
 
 	// check if data exists
 	if (!mfrc522_driver_dev->contains_data) {
@@ -67,9 +70,6 @@ ssize_t mfrc522_driver_read(struct file *file, char __user *buf,
 	}
 
 	// Copying our internal buffer (int *) into a string (char *)
-	char data[INTERNAL_BUFFER_SIZE + 1];
-	int i = 0;
-
 	memset(data, 0, INTERNAL_BUFFER_SIZE + 1);
 	while (i < INTERNAL_BUFFER_SIZE) {
 		data[i] = mfrc522_driver_dev->data[i];
@@ -86,7 +86,7 @@ ssize_t mfrc522_driver_read(struct file *file, char __user *buf,
 	// Reset internal buffer
 	memset(mfrc522_driver_dev->data, 0, INTERNAL_BUFFER_SIZE + 1);
 	mfrc522_driver_dev->contains_data = false;
-	data->bytes_read += 25;
+	driver_data->bytes_read += 25;
 
 	return INTERNAL_BUFFER_SIZE;
 }
@@ -94,12 +94,13 @@ ssize_t mfrc522_driver_read(struct file *file, char __user *buf,
 ssize_t mfrc522_driver_write(struct file *file, const char __user *user_buf,
 	size_t len, loff_t *off /* unused */) {
 	struct mfrc522_driver_dev *mfrc522_driver_dev;
-	struct mfrc522_driver_data *data;
+	struct mfrc522_driver_data *driver_data;
+	char buff[MAX_ACCEPTED_COMMAND_SIZE + 1];
+	struct command *command;
+	int res;
 
 	mfrc522_driver_dev = file->private_data;
-	data = mfrc522_driver_dev->dev->driver_data;
-
-	char buff[MAX_ACCEPTED_COMMAND_SIZE + 1];
+	driver_data = mfrc522_driver_dev->dev->driver_data;
 
 	memset(buff, 0, MAX_ACCEPTED_COMMAND_SIZE + 1);
 
@@ -109,12 +110,12 @@ ssize_t mfrc522_driver_write(struct file *file, const char __user *user_buf,
 		return -EFAULT;
 	}
 
-	struct command *command = parse_command(buff, mfrc522_driver_dev->log_level);
+	command = parse_command(buff, mfrc522_driver_dev->log_level);
 
 	if (command == NULL)
 		return -EFAULT;
 
-	int res = process_command(command, mfrc522_driver_dev);
+	res = process_command(command, mfrc522_driver_dev);
 
 	if ( res < 0) {
 		command_free(command);
@@ -122,7 +123,7 @@ ssize_t mfrc522_driver_write(struct file *file, const char __user *user_buf,
 	}
 	if (command->command_type == COMMAND_RANDOM
 		|| command->command_type == COMMAND_WRITE)
-		data->bytes_written += 25;
+		driver_data->bytes_written += 25;
 
 	command_free(command);
 	return len;
@@ -132,36 +133,80 @@ ssize_t mfrc522_driver_write(struct file *file, const char __user *user_buf,
  * Class attributes
  */
 
-static ssize_t bits_read_show(struct class *class, struct class_attribute *attr, char *buf) {
+static ssize_t avg_bits_read_show(struct class *class, struct class_attribute *attr, char *buf) {
 	// TODO
+	return 0;
 }
-CLASS_ATTR_RO(bits_read);
+CLASS_ATTR_RO(avg_bits_read);
 
-static ssize_t bits_written_show(struct class *class, struct class_attribute *attr, char *buf) {
+static ssize_t avg_bits_written_show(struct class *class, struct class_attribute *attr, char *buf) {
 	// TODO
+	return 0;
 }
-CLASS_ATTR_RO(bits_written);
+CLASS_ATTR_RO(avg_bits_written);
 
-static struct class_attribute *mfrc522_driver_class_attrs[] = {
-    &class_attr_bits_read,
-    &class_attr_bits_written,
-	NULL,
-};
-
-static const struct attribute_group mfrc522_driver_class_group = {
-    .attrs = (struct attribute **)mfrc522_driver_class_attrs,
-};
-
-static const struct attribute_group *mfrc522_driver_class_groups[] = {
-    &mfrc522_driver_class_group,
-    NULL,
+static struct class_attribute mfrc522_driver_class_attrs[] = {
+__ATTR(avg_bits_read, S_IRUGO, avg_bits_read_show, NULL),
+__ATTR(avg_bits_written, S_IRUGO, avg_bits_written_show, NULL),
+__ATTR_NULL,
 };
 
 static struct class mfrc522_driver_class = {
     .name = "mfrc522_driver",
     .owner = THIS_MODULE,
-    .class_groups = mfrc522_driver_class_groups,
+    .class_attrs = (struct class_attribute *)mfrc522_driver_class_attrs,
 };
+
+/*
+ * Device-specific attributes start here.
+ */
+
+static ssize_t bits_read_show(struct device *dev,
+	struct device_attribute *attr, char *buf) {
+	int ret;
+	struct mfrc522_driver_data *dd;
+
+	dd = (struct mfrc522_driver_data *) dev->driver_data;
+	ret = snprintf(buf, 8 /* 32-bit number + \n */, "%u\n", dd->bytes_read);
+	if (ret < 0) {
+	        pr_err("Failed to show nb_reads\n");
+	}
+	return ret;
+}
+/* Generates dev_attr_nb_reads */
+DEVICE_ATTR_RO(bits_read);
+
+static ssize_t bits_written_show(struct device *dev,
+	struct device_attribute *attr, char *buf) {
+	int ret;
+	struct mfrc522_driver_data *dd;
+
+	dd = (struct mfrc522_driver_data *) dev->driver_data;
+	ret = snprintf(buf, 8 /* 32-bit number + \n */, "%u\n", dd->bytes_written);
+	if (ret < 0) {
+	        pr_err("Failed to show nb_writes\n");
+	}
+	return ret;
+}
+/* Generates dev_attr_nb_writes */
+DEVICE_ATTR_RO(bits_written);
+
+static struct attribute *mfrc522_driver_attrs[] = {
+	&dev_attr_bits_read.attr,
+	&dev_attr_bits_written.attr,
+	NULL,
+};
+
+static const struct attribute_group mfrc522_driver_group = {
+	.attrs = mfrc522_driver_attrs,
+	/* is_visible() == NULL <==> always visible */
+};
+
+static const struct attribute_group *mfrc522_driver_groups[] = {
+	&mfrc522_driver_group,
+	NULL
+};
+
 /*
  *  Init & Exit
  */
@@ -199,11 +244,13 @@ static void mfrc522_driver_delete_devices(size_t count) {
 __exit
 static void mfrc522_driver_exit(void)
 {
+	int i;
+	int log_level = 0;
 
-	dev_t dev;
-	int log_level = mfrc522_driver_dev->log_level;
+	for (i = 0; i < MAX_DEVICES; i++)
+		log_level |= mfrc522_driver_devs[i]->log_level;
 
-	mfrc522_driver_destroy_sysfs(mfrc522_driver_dev, MAX_DEVICES);
+	mfrc522_driver_destroy_sysfs(mfrc522_driver_devs, MAX_DEVICES);
 	mfrc522_driver_delete_devices(MAX_DEVICES);
 
 	unregister_chrdev_region(MKDEV(major, 0), MAX_DEVICES);
@@ -232,7 +279,7 @@ static int mfrc522_driver_create_sysfs(struct mfrc522_driver_dev **mfrc522_drive
 	        /* Create device with all its attributes */
 	        dev = device_create_with_groups(&mfrc522_driver_class, NULL,
 	                MKDEV(major, i), NULL /* No private data */,
-	                mfrc522_driver_class_groups, "mfrc%zu", i);
+	                mfrc522_driver_groups, "mfrc%zu", i);
 	        if (IS_ERR(dev)) {
 	                ret = 1;
 	                goto sysfs_cleanup;
@@ -277,8 +324,8 @@ static int mfrc522_driver_setup_dev(size_t i)
 	int ret;
 
 	/* Allocate our device structure */
-	mfrc522_driver_devs[i] = kmalloc(sizeof(*mfrc522_driver_dev[i]), GFP_KERNEL);
-	if (!mfrc522_driver_dev) {
+	mfrc522_driver_devs[i] = kmalloc(sizeof(*mfrc522_driver_devs[i]), GFP_KERNEL);
+	if (!mfrc522_driver_devs[i]) {
 		LOG("init: failed to allocate struct mfrc522_driver_dev",
 			LOG_ERROR, LOG_ERROR);
 		return 1;
@@ -286,10 +333,10 @@ static int mfrc522_driver_setup_dev(size_t i)
 
 	mfrc522_driver_init_dev(mfrc522_driver_devs[i]);
 
-	ret = cdev_add(&(mfrc522_driver_dev[i])->cdev, MKDEV(major, i), 1);
+	ret = cdev_add(&(mfrc522_driver_devs[i])->cdev, MKDEV(major, i), 1);
 	if (ret < 0) {
 		LOG("init: failed to add device", LOG_ERROR,
-			mfrc522_driver_dev->log_level);
+			mfrc522_driver_devs[i]->log_level);
 		kfree(mfrc522_driver_devs[i]);
 		return 1;
 	}
@@ -300,12 +347,12 @@ static int mfrc522_driver_setup_dev(size_t i)
 __init
 static int mfrc522_driver_init(void)
 {
-	LOG("Hello, GISTRE card !", LOG_INFO, LOG_INFO);
-
 	dev_t dev;
 	int ret = 0;
 	size_t devices_set_up = 0;
 	size_t i;
+
+	LOG("Hello, GISTRE card !", LOG_INFO, LOG_INFO);
 
 	/* Allocate major */
 	ret = alloc_chrdev_region(&dev, 0, MAX_DEVICES, "mfrc");
@@ -331,7 +378,6 @@ static int mfrc522_driver_init(void)
 
 	LOG("init: %d devices successfully initialized",
 		LOG_INFO, LOG_INFO, MAX_DEVICES);
-	LOG("Got major %d for driver support for MRFC_522 card", LOG_INFO, LOG_INFO, major);
 	goto init_end;
 
 init_cleanup:
