@@ -41,7 +41,8 @@ void command_free(const struct command *command)
 static const char * const map_command[] = {
 [COMMAND_WRITE] = "mem_write",
 [COMMAND_READ] = "mem_read",
-[COMMAND_DEBUG] = "debug"
+[COMMAND_DEBUG] = "debug",
+[COMMAND_RANDOM] = "gen_rand_id",
 };
 
 typedef struct command* (*map_parse_command)(const char *buffer, int log_level);
@@ -50,6 +51,7 @@ static const map_parse_command jump_parse[] = {
 [COMMAND_WRITE] = parse_write,
 [COMMAND_READ] = parse_read,
 [COMMAND_DEBUG] = parse_debug,
+[COMMAND_RANDOM] = parse_random,
 };
 
 /**
@@ -85,6 +87,7 @@ static const map_process_command jump_process[] = {
 [COMMAND_WRITE] = process_write,
 [COMMAND_READ] = process_read,
 [COMMAND_DEBUG] = process_debug,
+[COMMAND_RANDOM] = process_random,
 };
 
 static struct regmap *find_regmap(void)
