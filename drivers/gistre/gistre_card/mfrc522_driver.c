@@ -314,6 +314,7 @@ sysfs_end:
 
 static void mfrc522_driver_init_dev(struct mfrc522_driver_dev *dev)
 {
+	dev->log_level = LOG_ERROR;
 	dev->cdev.owner = THIS_MODULE;
 	cdev_init(&dev->cdev, &mfrc522_driver_fops);
 	dev->dev = NULL;
