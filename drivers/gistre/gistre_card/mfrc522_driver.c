@@ -5,6 +5,9 @@
 #include <linux/slab.h>
 #include <linux/uaccess.h>
 #include <linux/device.h>
+#include <linux/of.h>
+
+#include "../mfrc522.h"
 
 #include "commands/command.h"
 #include "commands/utils.h"
@@ -391,6 +394,7 @@ static int mfrc522_driver_init(void)
 		return 1;
 	}
 
+
 	/* Allocate major */
 	ret = alloc_chrdev_region(&dev, 0, nb_devices, "mfrc");
 	if (ret < 0)
@@ -414,6 +418,15 @@ static int mfrc522_driver_init(void)
 		ret = -ENOMEM;
 		goto init_cleanup;
 	}
+
+	struct device_node *dev_node = of_find_node_by_name(NULL, "mfrc522_emu");
+    struct property *prop = dev_node->properties;
+	while (strcmp(prop->name, "version") != 0)
+		prop = prop->next;
+
+	char version = *((char *)(prop->value));
+	LOG("version: '%x'", LOG_INFO, LOG_INFO, version);
+
 
 	LOG("init: %d devices successfully initialized",
 		LOG_INFO, LOG_INFO, nb_devices);
