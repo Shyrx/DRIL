@@ -167,7 +167,11 @@ static ssize_t bits_read_show(struct device *dev,
 	struct mfrc522_driver_data *dd;
 
 	dd = (struct mfrc522_driver_data *) dev->driver_data;
-	ret = snprintf(buf, 8 /* 32-bit number + \n */, "%u\n", dd->bytes_read);
+	ret = snprintf(buf,
+                       8 /* 32-bit number + \n */,
+                       "%u\n",
+                       /* must be multiplied by 8 since it is asked to display the number of bits */
+                       dd->bytes_read * 8 );
 	if (ret < 0) {
 	        pr_err("Failed to show nb_reads\n");
 	}
@@ -182,7 +186,11 @@ static ssize_t bits_written_show(struct device *dev,
 	struct mfrc522_driver_data *dd;
 
 	dd = (struct mfrc522_driver_data *) dev->driver_data;
-	ret = snprintf(buf, 8 /* 32-bit number + \n */, "%u\n", dd->bytes_written);
+	ret = snprintf(buf,
+                       8 /* 32-bit number + \n */,
+                       "%u\n",
+                       /* must be multiplied by 8 since it is asked to display the number of bits */
+                       dd->bytes_written * 8);
 	if (ret < 0) {
 	        pr_err("Failed to show nb_writes\n");
 	}
