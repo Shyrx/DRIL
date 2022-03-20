@@ -117,7 +117,7 @@ ssize_t mfrc522_driver_write(struct file *file, const char __user *user_buf,
 
 	res = process_command(command, mfrc522_driver_dev);
 
-	if ( res < 0) {
+	if (res < 0) {
 		command_free(command);
 		return -EFAULT;
 	}
@@ -133,13 +133,15 @@ ssize_t mfrc522_driver_write(struct file *file, const char __user *user_buf,
  * Class attributes
  */
 
-static ssize_t avg_bits_read_show(struct class *class, struct class_attribute *attr, char *buf) {
+static ssize_t avg_bits_read_show(struct class *class, struct class_attribute *attr, char *buf)
+{
 	// TODO
 	return 0;
 }
 CLASS_ATTR_RO(avg_bits_read);
 
-static ssize_t avg_bits_written_show(struct class *class, struct class_attribute *attr, char *buf) {
+static ssize_t avg_bits_written_show(struct class *class, struct class_attribute *attr, char *buf)
+{
 	// TODO
 	return 0;
 }
@@ -152,9 +154,9 @@ __ATTR_NULL,
 };
 
 static struct class mfrc522_driver_class = {
-    .name = "mfrc522_driver",
-    .owner = THIS_MODULE,
-    .class_attrs = (struct class_attribute *)mfrc522_driver_class_attrs,
+	.name = "mfrc522_driver",
+	.owner = THIS_MODULE,
+	.class_attrs = (struct class_attribute *)mfrc522_driver_class_attrs,
 };
 
 /*
@@ -168,12 +170,13 @@ static ssize_t bits_read_show(struct device *dev,
 
 	dd = (struct mfrc522_driver_data *) dev->driver_data;
 	ret = snprintf(buf,
-                       8 /* 32-bit number + \n */,
-                       "%u\n",
-                       /* must be multiplied by 8 since it is asked to display the number of bits */
-                       dd->bytes_read * 8 );
+			   8
+					   /* 32-bit number + \n */,
+			   "%u\n",
+			   /* must be multiplied by 8 since it is asked to display the number of bits */
+			   dd->bytes_read * 8);
 	if (ret < 0) {
-	        pr_err("Failed to show nb_reads\n");
+			pr_err("Failed to show nb_reads\n");
 	}
 	return ret;
 }
@@ -187,12 +190,12 @@ static ssize_t bits_written_show(struct device *dev,
 
 	dd = (struct mfrc522_driver_data *) dev->driver_data;
 	ret = snprintf(buf,
-                       8 /* 32-bit number + \n */,
-                       "%u\n",
-                       /* must be multiplied by 8 since it is asked to display the number of bits */
-                       dd->bytes_written * 8);
+					   8 /* 32-bit number + \n */,
+					   "%u\n",
+					   /* must be multiplied by 8 since it is asked to display the number of bits */
+					   dd->bytes_written * 8);
 	if (ret < 0) {
-	        pr_err("Failed to show nb_writes\n");
+			pr_err("Failed to show nb_writes\n");
 	}
 	return ret;
 }
@@ -234,13 +237,14 @@ static void mfrc522_driver_destroy_sysfs(struct mfrc522_driver_dev **mfrc522_dri
 	size_t i;
 
 	for (i = 0; i < nb_devices; ++i) {
-	        kfree(mfrc522_driver_dev[i]->dev->driver_data);
-	        device_destroy(&mfrc522_driver_class, MKDEV(major, i));
+			kfree(mfrc522_driver_dev[i]->dev->driver_data);
+			device_destroy(&mfrc522_driver_class, MKDEV(major, i));
 	}
 	class_unregister(&mfrc522_driver_class);
 }
 
-static void mfrc522_driver_delete_devices(size_t count) {
+static void mfrc522_driver_delete_devices(size_t count)
+{
 	size_t i;
 
 	for (i = 0; i < count; i++) {
@@ -270,7 +274,8 @@ static void mfrc522_driver_exit(void)
 /* Create the whole file hierarchy under /sys/class/statistics/.
  * Character devices setup must have already been completed.
  */
-static int mfrc522_driver_create_sysfs(struct mfrc522_driver_dev **mfrc522_drivers_dev) {
+static int mfrc522_driver_create_sysfs(struct mfrc522_driver_dev **mfrc522_drivers_dev)
+{
 
 	int ret;
 	struct device *dev;
@@ -279,36 +284,36 @@ static int mfrc522_driver_create_sysfs(struct mfrc522_driver_dev **mfrc522_drive
 
 	ret = class_register(&mfrc522_driver_class);
 	if (ret < 0) {
-	        ret = 1;
-	        goto sysfs_end;
+			ret = 1;
+			goto sysfs_end;
 	}
 
 	for (i = 0; i < MAX_DEVICES; ++i) {
-	        /* Create device with all its attributes */
-	        dev = device_create_with_groups(&mfrc522_driver_class, NULL,
-	                MKDEV(major, i), NULL /* No private data */,
-	                mfrc522_driver_groups, "mfrc%zu", i);
-	        if (IS_ERR(dev)) {
-	                ret = 1;
-	                goto sysfs_cleanup;
-	        }
+			/* Create device with all its attributes */
+			dev = device_create_with_groups(&mfrc522_driver_class, NULL,
+					MKDEV(major, i), NULL /* No private data */,
+					mfrc522_driver_groups, "mfrc%zu", i);
+			if (IS_ERR(dev)) {
+					ret = 1;
+					goto sysfs_cleanup;
+			}
 
-	        /* Store access to the device. As we're the one creating it,
-	         * we take advantage if this direct access to struct device.
-	         * Note that on regular scenarios, this is not the case;
-	         * "struct device" and "struct cdev" are disjoint. */
-	        mfrc522_drivers_dev[i]->dev = dev;
+			/* Store access to the device. As we're the one creating it,
+			 * we take advantage if this direct access to struct device.
+			 * Note that on regular scenarios, this is not the case;
+			 * "struct device" and "struct cdev" are disjoint. */
+			mfrc522_drivers_dev[i]->dev = dev;
 
-	        data = kmalloc(sizeof(struct mfrc522_driver_data), GFP_KERNEL);
-	        if (!data) {
-	                device_destroy(&mfrc522_driver_class, MKDEV(major, i));
-	                ret = 1;
-	                goto sysfs_cleanup;
-	        }
+			data = kmalloc(sizeof(struct mfrc522_driver_data), GFP_KERNEL);
+			if (!data) {
+					device_destroy(&mfrc522_driver_class, MKDEV(major, i));
+					ret = 1;
+					goto sysfs_cleanup;
+			}
 			data->bytes_read = 0;
 			data->bytes_written = 0;
 			// Stock our data to retrieve them later
-	        mfrc522_drivers_dev[i]->dev->driver_data = (void *)data;
+			mfrc522_drivers_dev[i]->dev->driver_data = (void *)data;
 	}
 
 	goto sysfs_end;
