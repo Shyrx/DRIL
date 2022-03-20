@@ -28,8 +28,10 @@ int process_random(const struct command *command, const struct regmap *regmap,
 	LOG("random: Starting to generate random numbers", LOG_EXTRA, mfrc522_driver_dev->log_level);
 	char *rand = kmalloc_array(WRITE_COMMAND_LENGTH + BYTES_TO_GENERATE, sizeof(char), GFP_KERNEL);
 
-	if (rand == NULL)
+	if (rand == NULL) {
 		LOG("random: failed to allocate array for random number", LOG_ERROR, mfrc522_driver_dev->log_level);
+		return -1;
+ 	}
 
 	memcpy(rand, "mem_write:10:", WRITE_COMMAND_LENGTH);
 	get_random_bytes(rand + WRITE_COMMAND_LENGTH, BYTES_TO_GENERATE);
