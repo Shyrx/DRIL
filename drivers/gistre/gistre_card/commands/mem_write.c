@@ -50,10 +50,10 @@ int process_write(const struct command *command, const struct regmap *regmap,
 			mfrc522_driver_dev->log_level);
 		data_size = INTERNAL_BUFFER_SIZE;
 	}
-	if (data_size > given_size) {
-		LOG("write: asking to write %d but only %d were given, filling with zeroes",
-			LOG_EXTRA, mfrc522_driver_dev->log_level, data_size, given_size);
-		data_size = given_size;
+	if (data_size > given_size) 
+		LOG("write: asking to write %d but only %d were given",
+			LOG_ERROR, mfrc522_driver_dev->log_level, data_size, given_size);
+		return -1;
 	}
 
 	if (flush_fifo(regmap, mfrc522_driver_dev->log_level) < 0)
