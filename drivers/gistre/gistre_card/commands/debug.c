@@ -126,7 +126,7 @@ static void print_enabled_log_levels(int log_level)
  * @param buffer: the buffer containing the command
  * @return an enum with value corresponding to the kind of the debug operation to perform
  */
-static enum DEBUG_OPE get_debug_op(char *buffer, int log_level)
+static enum DEBUG_OPE get_debug_op(const char *buffer, int log_level)
 {
 	if (strcmp(buffer, "on") == 0) {
 		LOG("debug: enabling log levels...", LOG_EXTRA, log_level);
@@ -144,7 +144,7 @@ static enum DEBUG_OPE get_debug_op(char *buffer, int log_level)
 	return DEBUG_UNKOWN;
 }
 
-static enum LOG_LEVEL find_log_level(char *level, int log_level)
+enum LOG_LEVEL find_log_level(const char *level, int log_level)
 {
 	int i = 1;
 	// TODO ugly, should be changed

@@ -11,4 +11,5 @@ void dump_trace(const unsigned int *data, bool reading, int log_level);
 
 struct command *get_args(struct command *command, const char *buffer,
 						 int nb_args, const char *command_name);
+int process_logs_module_param(const char *log_levels_list);
 #endif // UTILS_H

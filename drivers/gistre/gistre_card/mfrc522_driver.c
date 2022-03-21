@@ -1,16 +1,30 @@
 #include "mfrc522_driver.h"
 
 #include <linux/errno.h>
+#include <linux/moduleparam.h>
 #include <linux/slab.h>
 #include <linux/uaccess.h>
 #include <linux/device.h>
 
 #include "commands/command.h"
+#include "commands/utils.h"
 
-#define MAX_DEVICES 1
+MODULE_SOFTDEP("pre: mfrc522_emu");
+
+#define MAX_PARAM_SIZE 50
+
+static int nb_devices = 1;
+module_param(nb_devices, int, S_IRUGO);
+
+/* command line param */
+static bool quiet;
+module_param(quiet, bool, S_IRUGO);
+
+static char starting_debug_levels[MAX_PARAM_SIZE];
+module_param_string(debug, starting_debug_levels, MAX_PARAM_SIZE, S_IRUGO); /* S_IRUGO to only change param at load time */
 
 static int major;
-static struct mfrc522_driver_dev *mfrc522_driver_devs[MAX_DEVICES];
+static struct mfrc522_driver_dev **mfrc522_driver_devs;
 
 int mfrc522_driver_open(struct inode *inode, struct file *file)
 {
@@ -251,6 +265,7 @@ static void mfrc522_driver_delete_devices(size_t count)
 		cdev_del(&(mfrc522_driver_devs[i])->cdev);
 		kfree(mfrc522_driver_devs[i]);
 	}
+	kfree(mfrc522_driver_devs);
 }
 
 __exit
@@ -259,13 +274,13 @@ static void mfrc522_driver_exit(void)
 	int i;
 	int log_level = 0;
 
-	for (i = 0; i < MAX_DEVICES; i++)
+	for (i = 0; i < nb_devices; i++)
 		log_level |= mfrc522_driver_devs[i]->log_level;
 
-	mfrc522_driver_destroy_sysfs(mfrc522_driver_devs, MAX_DEVICES);
-	mfrc522_driver_delete_devices(MAX_DEVICES);
+	mfrc522_driver_destroy_sysfs(mfrc522_driver_devs, nb_devices);
+	mfrc522_driver_delete_devices(nb_devices);
 
-	unregister_chrdev_region(MKDEV(major, 0), MAX_DEVICES);
+	unregister_chrdev_region(MKDEV(major, 0), nb_devices);
 	LOG("Released major %d", LOG_EXTRA, log_level, major);
 
 	LOG("Stopping driver support for MFRC_522 card", LOG_INFO, LOG_INFO);
@@ -276,7 +291,6 @@ static void mfrc522_driver_exit(void)
  */
 static int mfrc522_driver_create_sysfs(struct mfrc522_driver_dev **mfrc522_drivers_dev)
 {
-
 	int ret;
 	struct device *dev;
 	struct mfrc522_driver_data *data;
@@ -288,7 +302,7 @@ static int mfrc522_driver_create_sysfs(struct mfrc522_driver_dev **mfrc522_drive
 			goto sysfs_end;
 	}
 
-	for (i = 0; i < MAX_DEVICES; ++i) {
+	for (i = 0; i < nb_devices; ++i) {
 			/* Create device with all its attributes */
 			dev = device_create_with_groups(&mfrc522_driver_class, NULL,
 					MKDEV(major, i), NULL /* No private data */,
@@ -327,7 +341,12 @@ sysfs_end:
 
 static void mfrc522_driver_init_dev(struct mfrc522_driver_dev *dev)
 {
-	dev->log_level = LOG_ERROR;
+	if (quiet)
+		dev->log_level = LOG_NONE;
+	else if (strlen(starting_debug_levels) == 0) /* Enable error logs by default */
+		dev->log_level = LOG_ERROR;
+	else
+		dev->log_level = process_logs_module_param(starting_debug_levels);
 	dev->cdev.owner = THIS_MODULE;
 	cdev_init(&dev->cdev, &mfrc522_driver_fops);
 	dev->dev = NULL;
@@ -366,10 +385,9 @@ static int mfrc522_driver_init(void)
 	size_t devices_set_up = 0;
 	size_t i;
 
-	LOG("Hello, GISTRE card !", LOG_INFO, LOG_INFO);
-
+	printk(KERN_CONT "Hello, GISTRE card !\n"); /* to make sure it will work with the testsuite */
 	/* Allocate major */
-	ret = alloc_chrdev_region(&dev, 0, MAX_DEVICES, "mfrc");
+	ret = alloc_chrdev_region(&dev, 0, nb_devices, "mfrc");
 	if (ret < 0)
 		return ret;
 
@@ -377,7 +395,9 @@ static int mfrc522_driver_init(void)
 	LOG("Got major %d for driver support for MRFC_522 card",
 		LOG_INFO, LOG_INFO, major);
 
-	for (i = 0; i < MAX_DEVICES; i++) {
+	mfrc522_driver_devs = kmalloc_array(nb_devices,
+										sizeof(struct mfrc522_driver_dev *), GFP_KERNEL);
+	for (i = 0; i < nb_devices; i++) {
 		if (mfrc522_driver_setup_dev(i))
 			goto init_cleanup;
 
@@ -391,12 +411,12 @@ static int mfrc522_driver_init(void)
 	}
 
 	LOG("init: %d devices successfully initialized",
-		LOG_INFO, LOG_INFO, MAX_DEVICES);
+		LOG_INFO, LOG_INFO, nb_devices);
 	goto init_end;
 
 init_cleanup:
 	mfrc522_driver_delete_devices(devices_set_up);
-	unregister_chrdev_region(MKDEV(major, 0), MAX_DEVICES);
+	unregister_chrdev_region(MKDEV(major, 0), nb_devices);
 init_end:
 	return ret;
 }

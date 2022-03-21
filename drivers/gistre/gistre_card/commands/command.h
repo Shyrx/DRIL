@@ -19,6 +19,7 @@ enum COMMAND_TYPE {
 };
 
 enum LOG_LEVEL {
+LOG_NONE = 0,
 LOG_INFO = 1,
 LOG_TRACE = 2,
 LOG_WARN = 4,
@@ -29,6 +30,7 @@ LOG_NOT_FOUND = 32,
 
 const char *enum_log_to_string_message(int log_level);
 const char *format_message(const char *fmt, ...);
+enum LOG_LEVEL find_log_level(const char *level, int log_level);
 
 #define LOG(message, level_required, log_level, ...) \
 	do { \

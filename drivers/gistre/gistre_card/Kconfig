@@ -1,5 +1,5 @@
-config MFRC_522_DRIVER
-        bool "enable driver for MFRC_522 Card"
+config MFRC522_DRIVER
+        bool enable
         depends on MFRC522_EMU
         help
       This module is used to communicate with a mfrc522 card.
@@ -10,3 +10,21 @@ config MFRC_522_DRIVER
       You can also enable/disable all level of logging using `debug:<on/off>`
       and see currently enable logging level with `debug:status`.
 
+        string debug
+        imply enable
+        help
+      Set which logs level the driver should have enabled on startup.
+      Must be a : separated list containing unique values among <[info|trace|warn|extra|error]>.
+      Can also be equal to all to enable all logs.
+      Example: --debug info:trace
+      By default, only the error logs are enabled.
+
+        bool quiet
+        imply enable
+        help
+      Disable all debugs, has priority over the debug parameter
+
+        int nb_devices
+        imply enable
+        help
+      The number of devices to create when initializing the module

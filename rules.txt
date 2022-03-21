@@ -1,0 +1,15 @@
+- mem_write
+:5:hello OK
+:10:hello KO
+:5:hellooooooo KO
+:0: Erase all
+:lala:ignore KO
+:50:/*50 char*/ Trunc ?
+
+- mem_read
+- Something to read -> read 25 octets
+- Return 0
+:something K
+
+-gen_rand_id
+:something KO
