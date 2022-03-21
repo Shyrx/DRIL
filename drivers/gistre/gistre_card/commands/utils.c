@@ -88,7 +88,7 @@ void dump_trace(const unsigned int *data, bool reading, int log_level)
 	}
 }
 
-int process_logs_module_param(const char* log_levels_list)
+int process_logs_module_param(const char *log_levels_list)
 {
   int res = LOG_NONE;
   char *new_buff = astrcpy(log_levels_list);

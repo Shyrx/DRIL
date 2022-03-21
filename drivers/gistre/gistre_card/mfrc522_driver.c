@@ -13,12 +13,12 @@ MODULE_SOFTDEP("pre: mfrc522_emu");
 
 #define MAX_PARAM_SIZE 50
 
-static int nb_devices;
-module_param(nb_devices, int, 1);
+static int nb_devices = 1;
+module_param(nb_devices, int, S_IRUGO);
 
 /* command line param */
 static bool quiet;
-module_param(quiet, bool, false);
+module_param(quiet, bool, S_IRUGO);
 
 static char starting_debug_levels[MAX_PARAM_SIZE];
 module_param_string(debug, starting_debug_levels, MAX_PARAM_SIZE, S_IRUGO); /* S_IRUGO to only change param at load time */
@@ -396,7 +396,7 @@ static int mfrc522_driver_init(void)
 		LOG_INFO, LOG_INFO, major);
 
 	mfrc522_driver_devs = kmalloc_array(nb_devices,
-										sizeof(struct mfrc522_driver_dev*), GFP_KERNEL);
+										sizeof(struct mfrc522_driver_dev *), GFP_KERNEL);
 	for (i = 0; i < nb_devices; i++) {
 		if (mfrc522_driver_setup_dev(i))
 			goto init_cleanup;
