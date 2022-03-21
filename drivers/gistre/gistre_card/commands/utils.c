@@ -87,3 +87,23 @@ void dump_trace(const unsigned int *data, bool reading, int log_level)
 		i++;
 	}
 }
+
+int process_logs_module_param(const char* log_levels_list)
+{
+  int res = LOG_NONE;
+  char *new_buff = astrcpy(log_levels_list);
+  char *tok = NULL;
+  char *sep = ":";
+
+  while ((tok = strsep(&new_buff, sep)) != NULL) {
+    enum LOG_LEVEL log_level = find_log_level(tok, res);
+
+    if (log_level == LOG_NOT_FOUND)
+      LOG("invalid debug mode: %s", LOG_WARN, LOG_WARN, tok);
+    else
+      res |= log_level;
+  }
+
+  kfree(new_buff);
+  return res;
+}
