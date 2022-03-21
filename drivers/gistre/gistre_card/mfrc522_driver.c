@@ -11,20 +11,23 @@
 
 MODULE_SOFTDEP("pre: mfrc522_emu");
 
+
 #define MAX_PARAM_SIZE 50
+
 
 static int nb_devices = 1;
 module_param(nb_devices, int, S_IRUGO);
 
-/* command line param */
 static bool quiet;
 module_param(quiet, bool, S_IRUGO);
 
 static char starting_debug_levels[MAX_PARAM_SIZE];
 module_param_string(debug, starting_debug_levels, MAX_PARAM_SIZE, S_IRUGO); /* S_IRUGO to only change param at load time */
 
+
 static int major;
 static struct mfrc522_driver_dev **mfrc522_driver_devs;
+
 
 int mfrc522_driver_open(struct inode *inode, struct file *file)
 {
@@ -391,7 +394,6 @@ static int mfrc522_driver_init(void)
 		LOG("Trying to create a negative number of device, aborting.", LOG_ERROR, LOG_ERROR);
 		return 1;
 	}
-
 	/* Allocate major */
 	ret = alloc_chrdev_region(&dev, 0, nb_devices, "mfrc");
 	if (ret < 0)
