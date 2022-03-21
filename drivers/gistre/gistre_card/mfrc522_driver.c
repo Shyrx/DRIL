@@ -386,6 +386,11 @@ static int mfrc522_driver_init(void)
 	size_t i;
 
 	printk(KERN_CONT "Hello, GISTRE card !\n"); /* to make sure it will work with the testsuite */
+	if (nb_devices < 0) {
+		LOG("Trying to create a negative number of device, aborting.", LOG_ERROR, LOG_ERROR);
+		return 1;
+	}
+
 	/* Allocate major */
 	ret = alloc_chrdev_region(&dev, 0, nb_devices, "mfrc");
 	if (ret < 0)
