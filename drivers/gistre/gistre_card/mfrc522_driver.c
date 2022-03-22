@@ -420,12 +420,10 @@ static int mfrc522_driver_init(void)
 	}
 
 	struct device_node *dev_node = of_find_node_by_name(NULL, "mfrc522_emu");
-    struct property *prop = dev_node->properties;
-	while (strcmp(prop->name, "version") != 0)
-		prop = prop->next;
 
-	char version = *((char *)(prop->value));
-	LOG("version: '%x'", LOG_INFO, LOG_INFO, version);
+        u64 version;
+        int test = of_property_read_u64(dev_node, "version", version);
+	LOG("test: %d | version: '%lu'", LOG_INFO, LOG_INFO, test, version);
 
 
 	LOG("init: %d devices successfully initialized",
