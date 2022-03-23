@@ -141,8 +141,7 @@ ssize_t mfrc522_driver_write(struct file *file, const char __user *user_buf,
 		command_free(command);
 		return -EFAULT;
 	}
-	if (command->command_type == COMMAND_RANDOM
-		|| command->command_type == COMMAND_WRITE)
+	if (command->command_type == COMMAND_WRITE)
 		driver_data->bytes_written += 25;
 
 	command_free(command);
