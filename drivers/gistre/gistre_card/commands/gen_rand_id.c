@@ -6,7 +6,6 @@
 #include "utils.h"
 
 #define BYTES_TO_GENERATE 10
-// mem_write:10:
 #define WRITE_COMMAND_LENGTH 13
 
 struct command *parse_random(const char *buffer, int log_level)
@@ -25,7 +24,9 @@ struct command *parse_random(const char *buffer, int log_level)
 int process_random(const struct command *command, const struct regmap *regmap,
 				   struct mfrc522_driver_dev *mfrc522_driver_dev)
 {
-	LOG("random: Starting to generate random numbers", LOG_EXTRA, mfrc522_driver_dev->log_level);
+	LOG("random: Starting to generate random numbers",
+			LOG_EXTRA,
+			mfrc522_driver_dev->log_level);
 
 	if (regmap_write(regmap, MFRC522_CMDREG, MFRC522_GENERATERANDOMID)) {
 		LOG("random: Failed to generated random number", LOG_ERROR,

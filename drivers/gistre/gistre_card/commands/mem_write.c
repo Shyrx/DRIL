@@ -95,7 +95,8 @@ int process_write(const struct command *command, const struct regmap *regmap,
 		return -1;
 	}
 
-	LOG("write: operation successful", LOG_EXTRA, mfrc522_driver_dev->log_level);
+	LOG("write: operation successful",
+			LOG_EXTRA, mfrc522_driver_dev->log_level);
 	dump_trace(data_wrote, false, mfrc522_driver_dev->log_level);
 	return INTERNAL_BUFFER_SIZE;
 }
