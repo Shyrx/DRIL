@@ -19,10 +19,10 @@ MODULE_SOFTDEP("pre: mfrc522_emu");
 
 
 static int nb_devices = 1;
-module_param(nb_devices, int, S_IRUGO);
+module_param(nb_devices, int, 0);
 
 static bool quiet;
-module_param(quiet, bool, S_IRUGO);
+module_param(quiet, bool, 0);
 
 static char starting_debug_levels[MAX_PARAM_SIZE];
 module_param_string(debug, starting_debug_levels, MAX_PARAM_SIZE, S_IRUGO);
