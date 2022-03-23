@@ -41,7 +41,7 @@ int mfrc522_driver_open(struct inode *inode, struct file *file)
 		return -EINVAL;
 	}
 
-	LOG("open: major '%u', minor '%u'\n", LOG_EXTRA,
+	LOG("open: major '%u', minor '%u'", LOG_EXTRA,
 		mfrc522_driver_devs[i_minor]->log_level, i_major, i_minor);
 
 	mfrc522_driver_dev = container_of(inode->i_cdev, struct mfrc522_driver_dev, cdev);
@@ -63,7 +63,7 @@ int mfrc522_driver_release(struct inode *inode,
 		return -EINVAL;
 	}
 
-	LOG("release: major '%u', minor '%u'\n", LOG_EXTRA,
+	LOG("release: major '%u', minor '%u'", LOG_EXTRA,
 		mfrc522_driver_devs[i_minor]->log_level, i_major, i_minor);
 
 	return 0;
