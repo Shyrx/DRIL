@@ -5,6 +5,9 @@
 #include <linux/slab.h>
 #include <linux/uaccess.h>
 #include <linux/device.h>
+#include <linux/of.h>
+
+#include "../mfrc522.h"
 
 #include "commands/command.h"
 #include "commands/utils.h"
@@ -22,7 +25,7 @@ static bool quiet;
 module_param(quiet, bool, S_IRUGO);
 
 static char starting_debug_levels[MAX_PARAM_SIZE];
-module_param_string(debug, starting_debug_levels, MAX_PARAM_SIZE, S_IRUGO); /* S_IRUGO to only change param at load time */
+module_param_string(debug, starting_debug_levels, MAX_PARAM_SIZE, S_IRUGO);
 
 
 static int major;
@@ -394,6 +397,7 @@ static int mfrc522_driver_init(void)
 		LOG("Trying to create a negative number of device, aborting.", LOG_ERROR, LOG_ERROR);
 		return 1;
 	}
+
 	/* Allocate major */
 	ret = alloc_chrdev_region(&dev, 0, nb_devices, "mfrc");
 	if (ret < 0)
@@ -417,6 +421,16 @@ static int mfrc522_driver_init(void)
 		ret = -ENOMEM;
 		goto init_cleanup;
 	}
+
+	struct device_node *dev_node = of_find_node_by_name(NULL, "mfrc522_emu");
+
+		u32 version;
+		int check_property = of_property_read_u32(dev_node, "version", &version);
+		if (check_property)
+		  LOG("version property not found (%d)", LOG_WARN, LOG_WARN, check_property);
+		else
+		  LOG("version: %u", LOG_INFO, LOG_INFO, version);
+
 
 	LOG("init: %d devices successfully initialized",
 		LOG_INFO, LOG_INFO, nb_devices);
