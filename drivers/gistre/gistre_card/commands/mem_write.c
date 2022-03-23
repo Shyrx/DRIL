@@ -87,6 +87,14 @@ int process_write(const struct command *command, const struct regmap *regmap,
 		data_wrote[i] = 0;
 		i++;
 	}
+
+	// Writing from FIFO to card buffer
+	if (regmap_write(regmap, MFRC522_CMDREG, MFRC522_MEM)) {
+		LOG("write: failed to write FIFO to card buffer", LOG_ERROR,
+			mfrc522_driver_dev->log_level);
+		return -1;
+	}
+
 	LOG("write: operation successful", LOG_EXTRA, mfrc522_driver_dev->log_level);
 	dump_trace(data_wrote, false, mfrc522_driver_dev->log_level);
 	return INTERNAL_BUFFER_SIZE;

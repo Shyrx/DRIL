@@ -37,12 +37,21 @@ int process_read(const struct command *command, const struct regmap *regmap,
 	mfrc522_driver_dev->contains_data = false;
 	memset(mfrc522_driver_dev->data, 0, INTERNAL_BUFFER_SIZE + 1);
 	unsigned int fifo_size = 0;
-
+	// Flush FIFO
+	if (flush_fifo(regmap, mfrc522_driver_dev->log_level) < 0)
+		return -1;
+	// Get data from card buffer into FIFO
+	if (regmap_write(regmap, MFRC522_CMDREG, MFRC522_MEM)) {
+		LOG("read: Failed to transmit data from card buffer to FIFO", LOG_ERROR,
+			mfrc522_driver_dev->log_level);
+		return -1;
+	}
+	// Check FIFO size
 	if (regmap_read(regmap, MFRC522_FIFOLEVELREG, &fifo_size)) {
 		LOG("read: Failed to check fifo_size",
 			LOG_ERROR, mfrc522_driver_dev->log_level);
 		return -1;
-	}
+	} // If nothing to read, stop
 	if (fifo_size == 0) {
 		LOG("read: no data to read from card",
 			LOG_WARN, mfrc522_driver_dev->log_level);
@@ -51,7 +60,7 @@ int process_read(const struct command *command, const struct regmap *regmap,
 	LOG("read: Card buffer size if %d", LOG_INFO,
 		mfrc522_driver_dev->log_level, fifo_size);
 	int i = 0;
-
+	// Read from FIFO to device buffer
 	while (i < fifo_size) {
 		int err = regmap_read(regmap, MFRC522_FIFODATAREG, mfrc522_driver_dev->data + i);
 
@@ -62,8 +71,6 @@ int process_read(const struct command *command, const struct regmap *regmap,
 		}
 		i++;
 	}
-	if (flush_fifo(regmap, mfrc522_driver_dev->log_level) < 0)
-		return -1;
 
 	LOG("read: operation successful", LOG_EXTRA, mfrc522_driver_dev->log_level);
 	dump_trace(mfrc522_driver_dev->data, true, mfrc522_driver_dev->log_level);
