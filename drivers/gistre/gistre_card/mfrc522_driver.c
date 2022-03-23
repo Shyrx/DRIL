@@ -11,20 +11,23 @@
 
 MODULE_SOFTDEP("pre: mfrc522_emu");
 
+
 #define MAX_PARAM_SIZE 50
+
 
 static int nb_devices = 1;
 module_param(nb_devices, int, S_IRUGO);
 
-/* command line param */
 static bool quiet;
 module_param(quiet, bool, S_IRUGO);
 
 static char starting_debug_levels[MAX_PARAM_SIZE];
 module_param_string(debug, starting_debug_levels, MAX_PARAM_SIZE, S_IRUGO); /* S_IRUGO to only change param at load time */
 
+
 static int major;
 static struct mfrc522_driver_dev **mfrc522_driver_devs;
+
 
 int mfrc522_driver_open(struct inode *inode, struct file *file)
 {
@@ -74,7 +77,7 @@ ssize_t mfrc522_driver_read(struct file *file, char __user *buf,
 	int i = 0;
 
 	mfrc522_driver_dev = file->private_data;
-	driver_data = mfrc522_driver_dev->dev->driver_data;
+	driver_data = mfrc522_driver_dev->virtual_dev->driver_data;
 
 	// check if data exists
 	if (!mfrc522_driver_dev->contains_data) {
@@ -114,7 +117,7 @@ ssize_t mfrc522_driver_write(struct file *file, const char __user *user_buf,
 	int res;
 
 	mfrc522_driver_dev = file->private_data;
-	driver_data = mfrc522_driver_dev->dev->driver_data;
+	driver_data = mfrc522_driver_dev->virtual_dev->driver_data;
 
 	memset(buff, 0, MAX_ACCEPTED_COMMAND_SIZE + 1);
 
@@ -251,7 +254,7 @@ static void mfrc522_driver_destroy_sysfs(struct mfrc522_driver_dev **mfrc522_dri
 	size_t i;
 
 	for (i = 0; i < nb_devices; ++i) {
-			kfree(mfrc522_driver_dev[i]->dev->driver_data);
+			kfree(mfrc522_driver_dev[i]->virtual_dev->driver_data);
 			device_destroy(&mfrc522_driver_class, MKDEV(major, i));
 	}
 	class_unregister(&mfrc522_driver_class);
@@ -292,7 +295,7 @@ static void mfrc522_driver_exit(void)
 static int mfrc522_driver_create_sysfs(struct mfrc522_driver_dev **mfrc522_drivers_dev)
 {
 	int ret;
-	struct device *dev;
+	struct device *virtual_dev;
 	struct mfrc522_driver_data *data;
 	size_t i;
 
@@ -304,10 +307,10 @@ static int mfrc522_driver_create_sysfs(struct mfrc522_driver_dev **mfrc522_drive
 
 	for (i = 0; i < nb_devices; ++i) {
 			/* Create device with all its attributes */
-			dev = device_create_with_groups(&mfrc522_driver_class, NULL,
+			virtual_dev = device_create_with_groups(&mfrc522_driver_class, NULL,
 					MKDEV(major, i), NULL /* No private data */,
 					mfrc522_driver_groups, "mfrc%zu", i);
-			if (IS_ERR(dev)) {
+			if (IS_ERR(virtual_dev)) {
 					ret = 1;
 					goto sysfs_cleanup;
 			}
@@ -316,7 +319,7 @@ static int mfrc522_driver_create_sysfs(struct mfrc522_driver_dev **mfrc522_drive
 			 * we take advantage if this direct access to struct device.
 			 * Note that on regular scenarios, this is not the case;
 			 * "struct device" and "struct cdev" are disjoint. */
-			mfrc522_drivers_dev[i]->dev = dev;
+			mfrc522_drivers_dev[i]->virtual_dev = virtual_dev;
 
 			data = kmalloc(sizeof(struct mfrc522_driver_data), GFP_KERNEL);
 			if (!data) {
@@ -327,7 +330,7 @@ static int mfrc522_driver_create_sysfs(struct mfrc522_driver_dev **mfrc522_drive
 			data->bytes_read = 0;
 			data->bytes_written = 0;
 			// Stock our data to retrieve them later
-			mfrc522_drivers_dev[i]->dev->driver_data = (void *)data;
+			mfrc522_drivers_dev[i]->virtual_dev->driver_data = (void *)data;
 	}
 
 	goto sysfs_end;
@@ -349,7 +352,8 @@ static void mfrc522_driver_init_dev(struct mfrc522_driver_dev *dev)
 		dev->log_level = process_logs_module_param(starting_debug_levels);
 	dev->cdev.owner = THIS_MODULE;
 	cdev_init(&dev->cdev, &mfrc522_driver_fops);
-	dev->dev = NULL;
+	dev->card_dev = mfrc522_find_dev();
+	dev->virtual_dev = NULL;
 }
 
 static int mfrc522_driver_setup_dev(size_t i)
@@ -390,7 +394,6 @@ static int mfrc522_driver_init(void)
 		LOG("Trying to create a negative number of device, aborting.", LOG_ERROR, LOG_ERROR);
 		return 1;
 	}
-
 	/* Allocate major */
 	ret = alloc_chrdev_region(&dev, 0, nb_devices, "mfrc");
 	if (ret < 0)
