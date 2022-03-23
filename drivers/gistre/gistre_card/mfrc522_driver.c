@@ -149,34 +149,11 @@ ssize_t mfrc522_driver_write(struct file *file, const char __user *user_buf,
 	return len;
 }
 
-/*
- * Class attributes
- */
-
-static ssize_t avg_bits_read_show(struct class *class, struct class_attribute *attr, char *buf)
-{
-	// TODO
-	return 0;
-}
-CLASS_ATTR_RO(avg_bits_read);
-
-static ssize_t avg_bits_written_show(struct class *class, struct class_attribute *attr, char *buf)
-{
-	// TODO
-	return 0;
-}
-CLASS_ATTR_RO(avg_bits_written);
-
-static struct class_attribute mfrc522_driver_class_attrs[] = {
-__ATTR(avg_bits_read, S_IRUGO, avg_bits_read_show, NULL),
-__ATTR(avg_bits_written, S_IRUGO, avg_bits_written_show, NULL),
-__ATTR_NULL,
-};
+// Our own class
 
 static struct class mfrc522_driver_class = {
 	.name = "mfrc522_driver",
 	.owner = THIS_MODULE,
-	.class_attrs = (struct class_attribute *)mfrc522_driver_class_attrs,
 };
 
 /*
