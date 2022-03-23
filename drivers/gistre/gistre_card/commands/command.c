@@ -90,15 +90,15 @@ static const map_process_command jump_process[] = {
 [COMMAND_RANDOM] = process_random,
 };
 
-static struct regmap *find_regmap(void)
+static struct regmap *find_regmap(struct device *dev)
 {
-	return mfrc522_get_regmap(dev_to_mfrc522(mfrc522_find_dev()));
+	return mfrc522_get_regmap(dev_to_mfrc522(dev));
 }
 
 int process_command(const struct command *command,
 					struct mfrc522_driver_dev *mfrc522_driver_dev)
 {
 	return jump_process[command->command_type]
-		(command, find_regmap(), mfrc522_driver_dev);
+		(command, find_regmap(mfrc522_driver_dev->card_dev), mfrc522_driver_dev);
 }
 

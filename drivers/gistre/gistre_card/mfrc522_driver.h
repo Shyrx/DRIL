@@ -15,6 +15,7 @@ MODULE_LICENSE("GPL v2");
 struct mfrc522_driver_dev {
 	struct cdev cdev;
 	struct device *virtual_dev;
+	struct device *card_dev;
 	bool contains_data;
 	unsigned int log_level;
 	unsigned int data[INTERNAL_BUFFER_SIZE + 1];

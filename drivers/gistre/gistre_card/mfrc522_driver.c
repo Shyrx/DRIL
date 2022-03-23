@@ -349,6 +349,7 @@ static void mfrc522_driver_init_dev(struct mfrc522_driver_dev *dev)
 		dev->log_level = process_logs_module_param(starting_debug_levels);
 	dev->cdev.owner = THIS_MODULE;
 	cdev_init(&dev->cdev, &mfrc522_driver_fops);
+	dev->card_dev = mfrc522_find_dev();
 	dev->virtual_dev = NULL;
 }
 
