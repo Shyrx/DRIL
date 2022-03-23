@@ -3,7 +3,6 @@ result
 .ccls-cache
 *.cmd
 *.builtin
-*emu*
 *.o
 *mfrc522.h
 *.order
