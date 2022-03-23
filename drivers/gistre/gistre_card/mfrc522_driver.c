@@ -141,42 +141,18 @@ ssize_t mfrc522_driver_write(struct file *file, const char __user *user_buf,
 		command_free(command);
 		return -EFAULT;
 	}
-	if (command->command_type == COMMAND_RANDOM
-		|| command->command_type == COMMAND_WRITE)
+	if (command->command_type == COMMAND_WRITE)
 		driver_data->bytes_written += 25;
 
 	command_free(command);
 	return len;
 }
 
-/*
- * Class attributes
- */
-
-static ssize_t avg_bits_read_show(struct class *class, struct class_attribute *attr, char *buf)
-{
-	// TODO
-	return 0;
-}
-CLASS_ATTR_RO(avg_bits_read);
-
-static ssize_t avg_bits_written_show(struct class *class, struct class_attribute *attr, char *buf)
-{
-	// TODO
-	return 0;
-}
-CLASS_ATTR_RO(avg_bits_written);
-
-static struct class_attribute mfrc522_driver_class_attrs[] = {
-__ATTR(avg_bits_read, S_IRUGO, avg_bits_read_show, NULL),
-__ATTR(avg_bits_written, S_IRUGO, avg_bits_written_show, NULL),
-__ATTR_NULL,
-};
+// Our own class
 
 static struct class mfrc522_driver_class = {
 	.name = "mfrc522_driver",
 	.owner = THIS_MODULE,
-	.class_attrs = (struct class_attribute *)mfrc522_driver_class_attrs,
 };
 
 /*
@@ -423,14 +399,12 @@ static int mfrc522_driver_init(void)
 	}
 
 	struct device_node *dev_node = of_find_node_by_name(NULL, "mfrc522_emu");
-
-		u32 version;
-		int check_property = of_property_read_u32(dev_node, "version", &version);
-		if (check_property)
-		  LOG("version property not found (%d)", LOG_WARN, LOG_WARN, check_property);
-		else
-		  LOG("version: %u", LOG_INFO, LOG_INFO, version);
-
+	u32 version;
+	int check_property = of_property_read_u32(dev_node, "version", &version);
+	if (check_property)
+		LOG("version property not found (%d)", LOG_WARN, LOG_WARN, check_property);
+	else
+		LOG("version: %u", LOG_INFO, LOG_INFO, version);
 
 	LOG("init: %d devices successfully initialized",
 		LOG_INFO, LOG_INFO, nb_devices);
