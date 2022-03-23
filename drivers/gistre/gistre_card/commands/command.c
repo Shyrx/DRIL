@@ -66,8 +66,8 @@ struct command *parse_command(const char *buffer, int log_level)
 	enum COMMAND_TYPE command_type = 0;
 	// kind of ugly, move into dedicated function ?
 	while (command_type != COMMAND_NOT_FOUND
-			&& strncmp(buffer, map_command[command_type],
-					  strlen(map_command[command_type])) != 0) {
+		&& strncmp(buffer, map_command[command_type],
+			strlen(map_command[command_type])) != 0) {
 		command_type++;
 	}
 
@@ -96,9 +96,11 @@ static struct regmap *find_regmap(struct device *dev)
 }
 
 int process_command(const struct command *command,
-					struct mfrc522_driver_dev *mfrc522_driver_dev)
+				struct mfrc522_driver_dev *mfrc522_driver_dev)
 {
 	return jump_process[command->command_type]
-		(command, find_regmap(mfrc522_driver_dev->card_dev), mfrc522_driver_dev);
+		(command,
+				 find_regmap(mfrc522_driver_dev->card_dev),
+				 mfrc522_driver_dev);
 }
 

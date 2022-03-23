@@ -62,7 +62,9 @@ int process_read(const struct command *command, const struct regmap *regmap,
 	int i = 0;
 	// Read from FIFO to device buffer
 	while (i < fifo_size) {
-		int err = regmap_read(regmap, MFRC522_FIFODATAREG, mfrc522_driver_dev->data + i);
+		int err = regmap_read(regmap,
+					MFRC522_FIFODATAREG,
+					mfrc522_driver_dev->data + i);
 
 		if (err) {
 			LOG("read: failed to read value from card",

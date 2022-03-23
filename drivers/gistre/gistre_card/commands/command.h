@@ -57,14 +57,14 @@ struct command *parse_debug(const char *buffer, int log_level);
 struct command *parse_random(const char *buffer, int log_level);
 
 int process_command(const struct command *command,
-					struct mfrc522_driver_dev *mfrc522_driver_dev);
+			struct mfrc522_driver_dev *mfrc522_driver_dev);
 int process_write(const struct command *command, const struct regmap *regmap,
-				  struct mfrc522_driver_dev *mfrc522_driver_dev);
+			struct mfrc522_driver_dev *mfrc522_driver_dev);
 int process_read(const struct command *command, const struct regmap *regmap,
-				 struct mfrc522_driver_dev *mfrc522_driver_dev);
+			struct mfrc522_driver_dev *mfrc522_driver_dev);
 int process_debug(const struct command *command, const struct regmap *regmap,
-				  struct mfrc522_driver_dev *mfrc522_driver_dev);
+			struct mfrc522_driver_dev *mfrc522_driver_dev);
 int process_random(const struct command *command, const struct regmap *regmap,
-				  struct mfrc522_driver_dev *mfrc522_driver_dev);
+			struct mfrc522_driver_dev *mfrc522_driver_dev);
 
 #endif

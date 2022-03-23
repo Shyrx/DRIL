@@ -59,8 +59,6 @@ struct command *get_args(struct command *command, const char *buffer,
 
 	new_buff += strlen(command_name) + 1;
 	while ((tok = strsep(&new_buff, sep)) != NULL) {
-		// LOG("args %d: %s", LOG_EXTRA, log_level, i, tok);
-		// TODO: add log if LOG_EXTRA enabled to print all arguments parsed
 		*(command->args + i++) = astrcpy(tok);
 	}
 
@@ -73,14 +71,16 @@ void dump_trace(const unsigned int *data, bool reading, int log_level)
 	if (!(log_level & LOG_TRACE))
 		return;
 	LOG("Dumping trace:", LOG_TRACE, log_level);
-	printk(KERN_CONT "<%s>\n", reading ? "RD" : "WR");
+	printk(KERN_CONT "%s\n", reading ? "RD" : "WR");
 	int i = 0;
 
 	while (i < 5) {
 		int j = 0;
 
 		while (j < 5) {
-			printk(KERN_CONT "%02x%s", data[i * 5 + j], (j < 4 ? " " : ""));
+			printk(KERN_CONT "%02x%s",
+					data[i * 5 + j],
+				(j < 4 ? " " : ""));
 			j++;
 		}
 		printk(KERN_CONT "\n");

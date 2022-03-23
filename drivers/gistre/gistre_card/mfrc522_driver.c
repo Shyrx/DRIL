@@ -47,7 +47,8 @@ int mfrc522_driver_open(struct inode *inode, struct file *file)
 	LOG("open: major '%u', minor '%u'", LOG_EXTRA,
 		mfrc522_driver_devs[i_minor]->log_level, i_major, i_minor);
 
-	mfrc522_driver_dev = container_of(inode->i_cdev, struct mfrc522_driver_dev, cdev);
+	mfrc522_driver_dev = container_of(inode->i_cdev,
+					  struct mfrc522_driver_dev, cdev);
 	if (file->private_data != mfrc522_driver_dev) {
 		file->private_data = mfrc522_driver_dev;
 		return 0;
@@ -166,11 +167,11 @@ static ssize_t bits_read_show(struct device *dev,
 
 	dd = (struct mfrc522_driver_data *) dev->driver_data;
 	ret = snprintf(buf,
-			   8
-					   /* 32-bit number + \n */,
-			   "%u\n",
-			   /* must be multiplied by 8 since it is asked to display the number of bits */
-			   dd->bytes_read * 8);
+			8
+			/* 32-bit number + \n */,
+			"%u\n",
+			/* must be multiplied by 8 since it is asked to display the number of bits */
+			dd->bytes_read * 8);
 	if (ret < 0) {
 			pr_err("Failed to show nb_reads\n");
 	}
@@ -186,15 +187,16 @@ static ssize_t bits_written_show(struct device *dev,
 
 	dd = (struct mfrc522_driver_data *) dev->driver_data;
 	ret = snprintf(buf,
-					   8 /* 32-bit number + \n */,
-					   "%u\n",
-					   /* must be multiplied by 8 since it is asked to display the number of bits */
-					   dd->bytes_written * 8);
+			8 /* 32-bit number + \n */,
+			"%u\n",
+			/* must be multiplied by 8 since it is asked to display the number of bits */
+			dd->bytes_written * 8);
 	if (ret < 0) {
 			pr_err("Failed to show nb_writes\n");
 	}
 	return ret;
 }
+
 /* Generates dev_attr_nb_writes */
 DEVICE_ATTR_RO(bits_written);
 
@@ -213,10 +215,6 @@ static const struct attribute_group *mfrc522_driver_groups[] = {
 	&mfrc522_driver_group,
 	NULL
 };
-
-/*
- *  Init & Exit
- */
 
 static const struct file_operations mfrc522_driver_fops = {
 	.owner	= THIS_MODULE,
@@ -268,8 +266,10 @@ static void mfrc522_driver_exit(void)
 	LOG("Stopping driver support for MFRC_522 card", LOG_INFO, LOG_INFO);
 }
 
-/* Create the whole file hierarchy under /sys/class/statistics/.
+/**
+ * Create the whole file hierarchy under /sys/class/statistics/.
  * Character devices setup must have already been completed.
+ * @param mfrc522_drivers_dev: the structure that will contain all devices
  */
 static int mfrc522_driver_create_sysfs(struct mfrc522_driver_dev **mfrc522_drivers_dev)
 {
@@ -384,7 +384,7 @@ static int mfrc522_driver_init(void)
 		LOG_INFO, LOG_INFO, major);
 
 	mfrc522_driver_devs = kmalloc_array(nb_devices,
-										sizeof(struct mfrc522_driver_dev *), GFP_KERNEL);
+						sizeof(struct mfrc522_driver_dev *), GFP_KERNEL);
 	for (i = 0; i < nb_devices; i++) {
 		if (mfrc522_driver_setup_dev(i))
 			goto init_cleanup;
