@@ -17,14 +17,14 @@ MODULE_SOFTDEP("pre: mfrc522_emu");
 #define MAX_PARAM_SIZE 50
 
 static int nb_devices = 1;
-module_param(nb_devices, int, 0);
+module_param(nb_devices, int, S_IRUGO);
 
 /* command line param */
 static bool quiet;
-module_param(quiet, bool, 0);
+module_param(quiet, bool, S_IRUGO);
 
 static char starting_debug_levels[MAX_PARAM_SIZE];
-module_param_string(debug, starting_debug_levels, MAX_PARAM_SIZE, 0);
+module_param_string(debug, starting_debug_levels, MAX_PARAM_SIZE, S_IRUGO);
 
 static int major;
 static struct mfrc522_driver_dev **mfrc522_driver_devs;
@@ -421,12 +421,12 @@ static int mfrc522_driver_init(void)
 
 	struct device_node *dev_node = of_find_node_by_name(NULL, "mfrc522_emu");
 
-        u32 version;
-        int check_property = of_property_read_u32(dev_node, "version", &version);
-        if (check_property)
-          LOG("version property not found (%d)", LOG_WARN, LOG_WARN, check_property);
-        else
-          LOG("version: %u", LOG_INFO, LOG_INFO, version);
+		u32 version;
+		int check_property = of_property_read_u32(dev_node, "version", &version);
+		if (check_property)
+		  LOG("version property not found (%d)", LOG_WARN, LOG_WARN, check_property);
+		else
+		  LOG("version: %u", LOG_INFO, LOG_INFO, version);
 
 
 	LOG("init: %d devices successfully initialized",
